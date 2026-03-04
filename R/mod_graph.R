@@ -8,67 +8,152 @@
 #' @keywords internal
 mod_graph_ui <- function(id) {
   ns <- shiny::NS(id)
+  tip_label <- function(text, tip) {
+    htmltools::tags$span(text, title = tip)
+  }
 
   shiny::tagList(
-    shiny::fluidRow(
-      shiny::column(
-        width = 5,
-        shiny::sliderInput(
-          inputId = ns("min_score"),
-          label = "Minimum subsumption score",
-          min = 0.45,
-          max = 0.95,
-          value = 0.65,
-          step = 0.01
-        )
-      ),
-      shiny::column(
-        width = 4,
-        shiny::checkboxInput(
-          inputId = ns("best_parent_only"),
-          label = "Keep only best parent per child",
-          value = TRUE
-        )
-      ),
-      shiny::column(
-        width = 3,
-        shiny::div(
-          style = "margin-top:25px;",
-          shiny::div(
-            class = "graph-focus-nav",
-            shiny::actionButton(
-              inputId = ns("focus_prev_tree"),
-              label = "Focus Previous Tree",
-              icon = shiny::icon("arrow-left"),
-              class = "btn btn-default btn-sm"
-            ),
-            shiny::actionButton(
-              inputId = ns("focus_next_tree"),
-              label = "Focus Next Tree",
-              icon = shiny::icon("arrow-right"),
-              class = "btn btn-default btn-sm"
-            )
-          ),
-          shiny::actionButton(
-            inputId = ns("zoom_tree"),
-            label = "Focus Selected Tree",
-            icon = shiny::icon("bullseye"),
-            class = "btn btn-primary"
-          ),
+    htmltools::div(
+      class = "graph-controls-panel",
+      shiny::fluidRow(
+        shiny::column(
+          width = 7,
           htmltools::div(
-            class = "graph-focus-help",
-            "Click a node, then use this button."
+            style = "max-width: 720px;",
+            htmltools::div(
+              title = "Choose one hierarchy tree to display in the graph. You can type to filter tree names.",
+              shiny::selectizeInput(
+                inputId = ns("tree_selector"),
+                label = tip_label(
+                  "Select Tree",
+                  "Choose one hierarchy tree to display. Type to filter available trees."
+                ),
+                choices = c(),
+                selected = NULL,
+                options = list(
+                  placeholder = "Type to filter trees...",
+                  searchField = c("text", "value"),
+                  maxOptions = 2000,
+                  closeAfterSelect = TRUE,
+                  selectOnTab = TRUE
+                )
+              )
+            ),
+            htmltools::div(
+              style = "margin-top: -6px;",
+              title = "Switch between alphabetical order and descending tree size for the selector choices.",
+              shiny::checkboxInput(
+                inputId = ns("tree_sort_alpha"),
+                label = tip_label(
+                  "Sort trees alphabetically",
+                  "When checked, tree selector entries are sorted alphabetically. Otherwise they are sorted by node count."
+                ),
+                value = FALSE
+              )
+            ),
+            htmltools::div(
+              style = "margin-top: 2px;",
+              shiny::div(
+                class = "graph-focus-nav",
+                shiny::actionButton(
+                  inputId = ns("focus_prev_tree"),
+                  label = "Focus Previous Tree",
+                  icon = shiny::icon("arrow-left"),
+                  class = "btn btn-default btn-sm",
+                  title = "Select the previous tree based on the current selector ordering."
+                ),
+                shiny::actionButton(
+                  inputId = ns("focus_next_tree"),
+                  label = "Focus Next Tree",
+                  icon = shiny::icon("arrow-right"),
+                  class = "btn btn-default btn-sm",
+                  title = "Select the next tree based on the current selector ordering."
+                ),
+                shiny::actionButton(
+                  inputId = ns("reset_view"),
+                  label = "Reset View",
+                  icon = shiny::icon("crosshairs"),
+                  class = "btn btn-default btn-sm",
+                  title = "Reset pan and zoom to fit the currently selected tree."
+                )
+              )
+            )
+          )
+        ),
+        shiny::column(
+          width = 5,
+          shiny::div(
+            style = "max-width: 520px; margin-left: auto;",
+            title = "Hide weaker parent-child edges by increasing the minimum directed subsumption score threshold.",
+            shiny::sliderInput(
+              inputId = ns("min_score"),
+              label = tip_label(
+                "Minimum subsumption score",
+                "Edges are shown only if score >= this value. Higher values keep only stronger parent-child links."
+              ),
+              min = 0.45,
+              max = 0.95,
+              value = 0.65,
+              step = 0.01
+            ),
+            htmltools::div(
+              style = "margin-top: -6px;",
+              title = "If checked, each child keeps only its strongest parent edge at the current threshold.",
+              shiny::checkboxInput(
+                inputId = ns("best_parent_only"),
+                label = tip_label(
+                  "Keep only best parent per child",
+                  "Keep only the top-scoring incoming edge per child term."
+                ),
+                value = TRUE
+              )
+            ),
+            htmltools::div(
+              class = "graph-export-controls",
+              title = "Export current graph view, settings, and tables as HTML or PDF.",
+              shiny::selectInput(
+                inputId = ns("export_format"),
+                label = tip_label(
+                  "Export format",
+                  "Choose HTML for offline viewing, or PDF for print-ready output."
+                ),
+                choices = c(
+                  "HTML (offline)" = "html",
+                  "PDF (print)" = "pdf"
+                ),
+                selected = "html",
+                width = "220px"
+              ),
+              shiny::downloadButton(
+                outputId = ns("export_report"),
+                label = "Export",
+                class = "btn btn-default btn-sm"
+              )
+            )
           )
         )
       )
     ),
     htmltools::div(
-      class = "graph-summary",
-      shiny::textOutput(ns("graph_status"))
+      class = "graph-summary-row",
+      htmltools::div(
+        class = "graph-tree-badge-wrap",
+        shiny::uiOutput(ns("graph_tree_badge"))
+      )
     ),
     shiny::uiOutput(ns("graph_widget")),
-    htmltools::h4("Top Directed Edges"),
-    reactable::reactableOutput(ns("hierarchy_table"))
+    shiny::tabsetPanel(
+      id = ns("graph_tables_view"),
+      type = "tabs",
+      shiny::tabPanel(
+        title = "Top Directed Edges",
+        reactable::reactableOutput(ns("hierarchy_table"))
+      ),
+      shiny::tabPanel(
+        title = "Glossary Table",
+        mod_table_ui(ns("selected_tree_table"))
+      )
+    )
   )
 }
 
@@ -87,8 +172,11 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     full_edges_rv <- shiny::reactiveVal(NULL)
     cache_meta_rv <- shiny::reactiveVal(NULL)
     def_lookup_rv <- shiny::reactiveVal(character(0))
+    source_lookup_rv <- shiny::reactiveVal(character(0))
     selected_node_rv <- shiny::reactiveVal(NULL)
-    focused_tree_idx_rv <- shiny::reactiveVal(1L)
+    selected_tree_rv <- shiny::reactiveVal("")
+    last_view_rv <- shiny::reactiveVal(NULL)
+    restore_view_rv <- shiny::reactiveVal(NULL)
 
     shiny::observeEvent(merged_rv(), {
       data <- merged_rv()
@@ -96,16 +184,25 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
         cache_meta_rv(NULL)
         full_edges_rv(.empty_hierarchy_edges())
         def_lookup_rv(character(0))
+        source_lookup_rv(character(0))
         selected_node_rv(NULL)
+        selected_tree_rv("")
         if (!is.null(highlight_terms_rv)) highlight_terms_rv(character(0))
         return(invisible(NULL))
       }
 
       def_lookup_rv(.build_definition_lookup(data))
+      source_lookup_rv(.build_term_source_lookup(data))
 
       meta <- .hierarchy_cache_meta(data)
       cache_meta_rv(meta)
       cached <- .load_hierarchy_cache(cache_dir, meta)
+      if (is.null(cached)) {
+        cached <- .load_packaged_hierarchy_cache(meta)
+        if (!is.null(cached)) {
+          .save_hierarchy_cache(cache_dir, meta, cached)
+        }
+      }
       if (!is.null(cached)) {
         full_edges_rv(cached)
       } else {
@@ -151,17 +248,86 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
       if (isTRUE(input$best_parent_only)) {
         edges <- .select_best_parent_per_child(edges)
       }
+      # Guard vis hierarchical layout from low-threshold cycles.
+      edges <- .ensure_acyclic_edges(edges)
       edges[order(-edges$score, edges$child_term), , drop = FALSE]
+    })
+
+    tree_catalog <- shiny::reactive({
+      .ordered_roots_with_nodes(hierarchy_edges())
+    })
+
+    tree_selector_catalog <- shiny::reactive({
+      edges <- hierarchy_edges()
+      trees <- tree_catalog()
+      roots <- as.character(trees$roots)
+      node_sets <- trees$node_sets
+      sizes <- if (length(node_sets) > 0) {
+        vapply(node_sets, length, integer(1))
+      } else {
+        integer(0)
+      }
+
+      selected_anchor <- selected_tree_rv()
+      if (!is.null(selected_anchor) && nzchar(selected_anchor) && !(selected_anchor %in% roots)) {
+        anchor_nodes <- if (nrow(edges) > 0) {
+          .hierarchy_connected_terms(edges, selected_anchor)
+        } else {
+          character(0)
+        }
+        roots <- c(roots, selected_anchor)
+        node_sets <- c(node_sets, list(anchor_nodes))
+        sizes <- c(sizes, length(anchor_nodes))
+      }
+
+      if (length(roots) == 0) {
+        return(list(roots = character(0), node_sets = list(), sizes = integer(0)))
+      }
+
+      if (isTRUE(input$tree_sort_alpha)) {
+        ord <- order(tolower(roots), roots)
+      } else {
+        ord <- order(-sizes, roots)
+      }
+      list(
+        roots = roots[ord],
+        node_sets = node_sets[ord],
+        sizes = sizes[ord]
+      )
+    })
+
+    selected_tree_root <- shiny::reactive({
+      trees <- tree_selector_catalog()
+      roots <- trees$roots
+      if (length(roots) == 0) return("")
+      anchor <- selected_tree_rv()
+      if (!is.null(anchor) && nzchar(anchor)) {
+        if (anchor %in% roots) return(anchor)
+      }
+      roots[[1]]
+    })
+
+    selected_tree_terms <- shiny::reactive({
+      trees <- tree_selector_catalog()
+      root <- selected_tree_root()
+      if (!nzchar(root) || length(trees$roots) == 0) return(character(0))
+      idx <- match(root, trees$roots)
+      if (is.na(idx)) return(character(0))
+      trees$node_sets[[idx]]
     })
 
     plot_edges <- shiny::reactive({
       edges <- hierarchy_edges()
       if (nrow(edges) == 0) return(edges)
-      edges[order(-edges$score), , drop = FALSE]
-    })
-
-    ordered_trees <- shiny::reactive({
-      .ordered_roots_with_nodes(plot_edges())
+      selected_terms <- selected_tree_terms()
+      if (length(selected_terms) == 0) return(edges[0, , drop = FALSE])
+      edges <- edges[
+        edges$parent_term %in% selected_terms &
+          edges$child_term %in% selected_terms,
+        ,
+        drop = FALSE
+      ]
+      edges[order(-edges$score, edges$child_term), , drop = FALSE]
     })
 
     shiny::observeEvent(input$node_click, {
@@ -173,6 +339,20 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
       }
     }, ignoreNULL = FALSE)
 
+    shiny::observeEvent(input$graph_view, {
+      v <- input$graph_view
+      if (is.null(v)) return(invisible(NULL))
+      x <- suppressWarnings(as.numeric(v$x))
+      y <- suppressWarnings(as.numeric(v$y))
+      s <- suppressWarnings(as.numeric(v$scale))
+      if (is.na(x) || is.na(y) || is.na(s) || s <= 0) return(invisible(NULL))
+      last_view_rv(list(x = x, y = y, scale = s))
+    }, ignoreNULL = FALSE)
+
+    shiny::observeEvent(input$min_score, {
+      restore_view_rv(last_view_rv())
+    }, ignoreInit = TRUE)
+
     shiny::observe({
       edges <- plot_edges()
       selected <- selected_node_rv()
@@ -182,109 +362,154 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
       }
     })
 
-    current_tree_index <- shiny::reactive({
-      trees <- ordered_trees()
-      n_trees <- length(trees$roots)
-      if (n_trees == 0) return(NA_integer_)
-
-      selected <- selected_node_rv()
-      if (!is.null(selected) && nzchar(selected)) {
-        idx <- which(vapply(trees$node_sets, function(nodes) selected %in% nodes, logical(1)))
-        if (length(idx) > 0) return(as.integer(idx[[1]]))
-      }
-
-      idx <- as.integer(focused_tree_idx_rv())
-      if (is.na(idx) || idx < 1L) idx <- 1L
-      if (idx > n_trees) idx <- n_trees
-      idx
-    })
-
     shiny::observe({
-      trees <- ordered_trees()
-      n_trees <- length(trees$roots)
-      if (n_trees == 0) {
-        focused_tree_idx_rv(1L)
+      trees <- tree_selector_catalog()
+      roots <- trees$roots
+      sizes <- trees$sizes
+      if (length(roots) == 0) {
+        shiny::updateSelectizeInput(
+          session,
+          "tree_selector",
+          choices = c("No trees available" = ""),
+          selected = "",
+          server = TRUE
+        )
         return(invisible(NULL))
       }
-      idx <- as.integer(focused_tree_idx_rv())
-      if (is.na(idx) || idx < 1L) idx <- 1L
-      if (idx > n_trees) idx <- n_trees
-      focused_tree_idx_rv(idx)
+
+      labels <- vapply(seq_along(roots), function(i) {
+        paste0(roots[[i]], " (", sizes[[i]], " nodes)")
+      }, character(1))
+      choices <- stats::setNames(roots, labels)
+
+      selected <- selected_tree_root()
+      shiny::updateSelectizeInput(
+        session,
+        "tree_selector",
+        choices = choices,
+        selected = selected,
+        server = TRUE
+      )
     })
 
-    .focus_tree_by_index <- function(idx) {
-      trees <- ordered_trees()
-      n_trees <- length(trees$roots)
-      if (n_trees == 0) return(invisible(NULL))
-
-      idx <- as.integer(idx)
-      if (is.na(idx) || idx < 1L) idx <- 1L
-      if (idx > n_trees) idx <- n_trees
-
-      root <- trees$roots[[idx]]
-      nodes <- trees$node_sets[[idx]]
-      if (!is.null(root) && nzchar(root)) selected_node_rv(root)
-      focused_tree_idx_rv(idx)
-
-      proxy <- visNetwork::visNetworkProxy(session$ns("hierarchy_graph"), session = session)
-      visNetwork::visFit(
-        proxy,
-        nodes = nodes,
-        animation = list(duration = 450, easingFunction = "easeInOutQuad")
-      )
-      invisible(NULL)
-    }
-
     shiny::observeEvent(input$focus_prev_tree, {
-      idx <- current_tree_index()
-      if (is.na(idx)) return(invisible(NULL))
-      .focus_tree_by_index(max(1L, idx - 1L))
+      trees <- tree_selector_catalog()
+      roots <- trees$roots
+      n <- length(roots)
+      if (n == 0) return(invisible(NULL))
+      root <- selected_tree_root()
+      idx <- match(root, roots)
+      if (is.na(idx)) idx <- 1L
+      target <- max(1L, idx - 1L)
+      selected_tree_rv(roots[[target]])
     })
 
     shiny::observeEvent(input$focus_next_tree, {
-      idx <- current_tree_index()
-      if (is.na(idx)) return(invisible(NULL))
-      trees <- ordered_trees()
-      .focus_tree_by_index(min(length(trees$roots), idx + 1L))
+      trees <- tree_selector_catalog()
+      roots <- trees$roots
+      n <- length(roots)
+      if (n == 0) return(invisible(NULL))
+      root <- selected_tree_root()
+      idx <- match(root, roots)
+      if (is.na(idx)) idx <- 1L
+      target <- min(n, idx + 1L)
+      selected_tree_rv(roots[[target]])
     })
 
-    selected_tree_terms <- shiny::reactive({
-      edges <- plot_edges()
-      selected <- selected_node_rv()
-      if (is.null(selected) || !nzchar(selected) || nrow(edges) == 0) return(character(0))
-      .hierarchy_connected_terms(edges, selected)
+    shiny::observeEvent(input$reset_view, {
+      restore_view_rv(NULL)
+      last_view_rv(NULL)
+      if (!requireNamespace("visNetwork", quietly = TRUE)) return(invisible(NULL))
+      linked <- selected_tree_terms()
+      proxy <- visNetwork::visNetworkProxy(session$ns("hierarchy_graph"), session = session)
+      tryCatch({
+        if (length(linked) > 0) {
+          visNetwork::visFit(
+            proxy,
+            nodes = linked,
+            animation = list(duration = 400, easingFunction = "easeInOutQuad")
+          )
+        } else {
+          visNetwork::visFit(
+            proxy,
+            animation = list(duration = 400, easingFunction = "easeInOutQuad")
+          )
+        }
+      }, error = function(e) {
+        invisible(NULL)
+      })
     })
+
+    shiny::observeEvent(input$tree_selector, {
+      roots <- tree_selector_catalog()$roots
+      if (!is.null(input$tree_selector) &&
+          nzchar(input$tree_selector) &&
+          input$tree_selector %in% roots) {
+        selected_tree_rv(input$tree_selector)
+      }
+      root <- selected_tree_root()
+      if (!nzchar(root)) {
+        selected_node_rv(NULL)
+      } else if (!identical(selected_node_rv(), root)) {
+        selected_node_rv(root)
+      }
+    }, ignoreInit = TRUE)
+
+    mod_table_server(
+      id = "selected_tree_table",
+      merged_rv = merged_rv,
+      cache_dir = cache_dir,
+      highlight_terms_rv = highlight_terms_rv,
+      filter_terms_rv = selected_tree_terms
+    )
 
     shiny::observe({
       if (is.null(highlight_terms_rv)) return(invisible(NULL))
-      highlight_terms_rv(selected_tree_terms())
+      selected <- selected_node_rv()
+      if (is.null(selected) || !nzchar(selected)) {
+        highlight_terms_rv(character(0))
+        return(invisible(NULL))
+      }
+
+      in_tree <- selected %in% selected_tree_terms()
+      if (isTRUE(in_tree)) {
+        highlight_terms_rv(selected)
+      } else {
+        highlight_terms_rv(character(0))
+      }
     })
 
-    output$graph_status <- shiny::renderText({
-      all_edges <- full_hierarchy_edges()
-      shown_edges <- hierarchy_edges()
-      if (is.null(all_edges) || nrow(all_edges) == 0) {
-        return("No directed hierarchy edges available.")
+    output$graph_tree_badge <- shiny::renderUI({
+      root <- selected_tree_root()
+      shown_edges <- plot_edges()
+      terms <- selected_tree_terms()
+
+      if (!nzchar(root)) {
+        return(
+          htmltools::span(
+            class = "graph-tree-badge graph-tree-badge-empty",
+            "Tree: none"
+          )
+        )
       }
-      if (nrow(shown_edges) == 0) {
-        return(paste0(
-          "No edges pass the current threshold (", sprintf("%.2f", input$min_score),
-          "). Cached total edges: ", nrow(all_edges)
-        ))
-      }
-      selected <- selected_node_rv()
-      selected_suffix <- if (is.null(selected) || !nzchar(selected)) {
-        ""
-      } else {
-        paste0(" | Selected node: ", selected)
-      }
-      nodes_n <- length(unique(c(shown_edges$parent_term, shown_edges$child_term)))
-      paste0(
-        "Displayed edges: ", nrow(shown_edges),
-        " (cached total: ", nrow(all_edges), ")",
-        " | Connected terms: ", nodes_n,
-        " | Current threshold: ", sprintf("%.2f", input$min_score),
-        selected_suffix
+
+      terms <- unique(terms[!is.na(terms) & nzchar(terms)])
+      node_count <- length(unique(c(root, terms)))
+      edge_count <- if (is.null(shown_edges)) 0L else nrow(shown_edges)
+
+      htmltools::span(
+        class = "graph-tree-badge",
+        htmltools::tags$strong("Tree:"),
+        " ",
+        htmltools::span(class = "graph-tree-name", root),
+        " | ",
+        htmltools::tags$strong("Nodes:"),
+        " ",
+        as.character(node_count),
+        " | ",
+        htmltools::tags$strong("Edges:"),
+        " ",
+        as.character(edge_count)
       )
     })
 
@@ -298,41 +523,65 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
 
     if (requireNamespace("visNetwork", quietly = TRUE)) {
       graph_data <- shiny::reactive({
-        .build_vis_graph_data(plot_edges(), def_lookup_rv())
+        .build_vis_graph_data(plot_edges(), def_lookup_rv(), source_lookup_rv())
       })
 
       output$hierarchy_graph <- visNetwork::renderVisNetwork({
         .build_vis_hierarchy_network(
           graph_data = graph_data(),
-          click_input_id = session$ns("node_click")
+          click_input_id = session$ns("node_click"),
+          view_input_id = session$ns("graph_view")
         )
       })
 
+      shiny::observeEvent(graph_data(), {
+        view <- restore_view_rv()
+        if (is.null(view)) return(invisible(NULL))
+        proxy <- visNetwork::visNetworkProxy(session$ns("hierarchy_graph"), session = session)
+        move_to_fn <- if (exists("visMoveTo", envir = asNamespace("visNetwork"), mode = "function", inherits = FALSE)) {
+          get("visMoveTo", envir = asNamespace("visNetwork"))
+        } else {
+          NULL
+        }
+        tryCatch({
+          if (is.function(move_to_fn)) {
+            do.call(move_to_fn, list(
+              graph = proxy,
+              position = list(x = view$x, y = view$y),
+              scale = view$scale,
+              animation = list(duration = 0)
+            ))
+          } else {
+            # Fallback for older visNetwork versions without visMoveTo export.
+            linked <- selected_tree_terms()
+            if (length(linked) > 0) {
+              visNetwork::visFit(proxy, nodes = linked, animation = list(duration = 0))
+            } else {
+              visNetwork::visFit(proxy, animation = list(duration = 0))
+            }
+          }
+        }, error = function(e) {
+          invisible(NULL)
+        })
+        restore_view_rv(NULL)
+      }, ignoreInit = TRUE)
+
       shiny::observe({
         gd <- graph_data()
+        if (is.null(gd) || nrow(gd$nodes) == 0) return(invisible(NULL))
         style <- .vis_style_for_selection(gd, selected_node_rv())
+        if (nrow(style$nodes) == 0 && nrow(style$edges) == 0) return(invisible(NULL))
         proxy <- visNetwork::visNetworkProxy(session$ns("hierarchy_graph"), session = session)
-        proxy <- visNetwork::visUpdateNodes(proxy, nodes = style$nodes)
-        proxy <- visNetwork::visUpdateEdges(proxy, edges = style$edges)
-      })
-
-      shiny::observeEvent(input$zoom_tree, {
-        gd <- graph_data()
-        if (nrow(gd$nodes) == 0) return(invisible(NULL))
-        linked <- selected_tree_terms()
-        proxy <- visNetwork::visNetworkProxy(session$ns("hierarchy_graph"), session = session)
-        if (length(linked) > 0) {
-          visNetwork::visFit(
-            proxy,
-            nodes = linked,
-            animation = list(duration = 500, easingFunction = "easeInOutQuad")
-          )
-        } else {
-          visNetwork::visFit(
-            proxy,
-            animation = list(duration = 500, easingFunction = "easeInOutQuad")
-          )
-        }
+        tryCatch({
+          if (nrow(style$nodes) > 0) {
+            proxy <- visNetwork::visUpdateNodes(proxy, nodes = style$nodes)
+          }
+          if (nrow(style$edges) > 0) {
+            proxy <- visNetwork::visUpdateEdges(proxy, edges = style$edges)
+          }
+        }, error = function(e) {
+          invisible(NULL)
+        })
       })
     } else {
       output$hierarchy_plot <- shiny::renderPlot({
@@ -342,16 +591,33 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     }
 
     output$hierarchy_table <- reactable::renderReactable({
-      edges <- hierarchy_edges()
+      edges <- plot_edges()
       selected <- selected_node_rv()
       linked <- selected_tree_terms()
+
+      if (length(linked) > 0) {
+        edges <- edges[edges$parent_term %in% linked & edges$child_term %in% linked, , drop = FALSE]
+      } else {
+        edges <- edges[0, , drop = FALSE]
+      }
+
       if (nrow(edges) == 0) {
+        msg <- if (length(linked) == 0) {
+          "No selected tree is available at this threshold."
+        } else {
+          "No directed edges available for the selected tree at this threshold."
+        }
         return(reactable::reactable(
-          data.frame(Message = "No edges available at the current threshold."),
+          data.frame(Message = msg),
           bordered = TRUE
         ))
       }
-      edges <- edges[order(-edges$score), , drop = FALSE]
+      is_highlight <- if (!is.null(selected) && nzchar(selected)) {
+        edges$parent_term == selected | edges$child_term == selected
+      } else {
+        rep(FALSE, nrow(edges))
+      }
+      edges <- edges[order(!is_highlight, -edges$score, edges$parent_term, edges$child_term), , drop = FALSE]
       k <- min(50L, nrow(edges))
       out <- edges[seq_len(k), c(
         "parent_term", "child_term", "score", "lex_sub", "def_contain", "def_sim"
@@ -360,16 +626,12 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
         out,
         striped = TRUE,
         bordered = TRUE,
-        defaultPageSize = 10,
+        defaultPageSize = 100,
         rowStyle = function(index) {
           row <- out[index, , drop = FALSE]
           if (!is.null(selected) && nzchar(selected) &&
               (row$parent_term == selected || row$child_term == selected)) {
             return(list(background = "#ffe8b3", boxShadow = "inset 4px 0 0 #f59e0b"))
-          }
-          if (length(linked) > 0 &&
-              row$parent_term %in% linked && row$child_term %in% linked) {
-            return(list(background = "#fff7d6"))
           }
           NULL
         },
@@ -383,6 +645,152 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
         )
       )
     })
+
+    export_payload <- shiny::reactive({
+      selected_terms <- unique(selected_tree_terms())
+      selected_terms <- selected_terms[!is.na(selected_terms) & nzchar(selected_terms)]
+      graph_export <- .build_vis_graph_data(plot_edges(), def_lookup_rv(), source_lookup_rv())
+
+      edges <- plot_edges()
+      edge_df <- if (is.null(edges) || nrow(edges) == 0) {
+        data.frame(
+          Parent = character(0),
+          Child = character(0),
+          Score = numeric(0),
+          LexSub = numeric(0),
+          DefContain = numeric(0),
+          DefSim = numeric(0),
+          stringsAsFactors = FALSE
+        )
+      } else {
+        data.frame(
+          Parent = as.character(edges$parent_term),
+          Child = as.character(edges$child_term),
+          Score = round(as.numeric(edges$score), 4),
+          LexSub = round(as.numeric(edges$lex_sub), 4),
+          DefContain = round(as.numeric(edges$def_contain), 4),
+          DefSim = round(as.numeric(edges$def_sim), 4),
+          stringsAsFactors = FALSE
+        )
+      }
+
+      merged <- merged_rv()
+      glossary_df <- data.frame(
+        Term = character(0),
+        Within_IPBES = character(0),
+        Within_IPCC = character(0),
+        Between_All = character(0),
+        IPBES_Assessments = character(0),
+        IPBES_Definitions = character(0),
+        IPCC_Reports = character(0),
+        IPCC_Definitions = character(0),
+        stringsAsFactors = FALSE
+      )
+
+      if (!is.null(merged) && nrow(merged) > 0 && length(selected_terms) > 0) {
+        selected <- merged[merged$matched_term %in% selected_terms, , drop = FALSE]
+        selected <- selected[order(selected$matched_term), , drop = FALSE]
+
+        if (nrow(selected) > 0) {
+          rows <- lapply(seq_len(nrow(selected)), function(i) {
+            row <- selected[i, , drop = FALSE]
+
+            ipbes_grouped <- .group_definitions_by_text(row$ipbes_data[[1]], "assessment")
+            ipcc_grouped <- .group_definitions_by_text(row$ipcc_data[[1]], "report")
+
+            data.frame(
+              Term = as.character(row$matched_term),
+              Within_IPBES = .export_fmt_score(row$sim_within_ipbes),
+              Within_IPCC = .export_fmt_score(row$sim_within_ipcc),
+              Between_All = .export_fmt_score(row$sim_between_all),
+              IPBES_Assessments = .export_flatten_grouped_sources(ipbes_grouped, "assessment"),
+              IPBES_Definitions = .export_flatten_grouped_defs(ipbes_grouped),
+              IPCC_Reports = .export_flatten_grouped_sources(ipcc_grouped, "report"),
+              IPCC_Definitions = .export_flatten_grouped_defs(ipcc_grouped),
+              stringsAsFactors = FALSE
+            )
+          })
+          glossary_df <- do.call(rbind, rows)
+        }
+      }
+
+      settings <- list(
+        `Selected Tree` = selected_tree_root(),
+        `Selected Node` = selected_node_rv(),
+        `Displayed Nodes` = length(selected_terms),
+        `Displayed Edges` = nrow(edge_df),
+        `Minimum Subsumption Score` = sprintf("%.2f", input$min_score),
+        `Best Parent Only` = if (isTRUE(input$best_parent_only)) "Yes" else "No",
+        `Sort Trees Alphabetically` = if (isTRUE(input$tree_sort_alpha)) "Yes" else "No"
+      )
+
+      list(
+        settings = settings,
+        edges = edge_df,
+        glossary = glossary_df,
+        graph_nodes = graph_export$nodes,
+        graph_edges = graph_export$edges
+      )
+    })
+
+    output$export_report <- shiny::downloadHandler(
+      filename = function() {
+        ext <- if (identical(input$export_format, "pdf")) "pdf" else "html"
+        paste0("glossary-export-", format(Sys.time(), "%Y%m%d-%H%M%S"), ".", ext)
+      },
+      content = function(file) {
+        if (!requireNamespace("rmarkdown", quietly = TRUE)) {
+          stop("Package 'rmarkdown' is required for export.")
+        }
+
+        is_pdf <- identical(input$export_format, "pdf")
+        if (is_pdf && !nzchar(Sys.which("pdflatex"))) {
+          stop("PDF export requires a LaTeX engine (e.g., TinyTeX). Please install it or export as HTML.")
+        }
+
+        payload <- export_payload()
+        template <- .export_report_template_path()
+        if (!file.exists(template)) {
+          stop("Export template not found: ", template)
+        }
+
+        tmp_dir <- tempfile("glossary_export_")
+        dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+
+        graph_png <- file.path(tmp_dir, "graph.png")
+        grDevices::png(filename = graph_png, width = 2400, height = 1400, res = 170)
+        tryCatch(
+          .plot_hierarchy_network(plot_edges()),
+          finally = grDevices::dev.off()
+        )
+
+        output_name <- if (is_pdf) "export.pdf" else "export.html"
+        output_format <- if (is_pdf) "pdf_document" else "html_document"
+
+        rendered <- rmarkdown::render(
+          input = template,
+          output_format = output_format,
+          output_file = output_name,
+          output_dir = tmp_dir,
+          params = list(
+            settings = payload$settings,
+            graph_png = graph_png,
+            edges_df = payload$edges,
+            glossary_df = payload$glossary,
+            graph_nodes = payload$graph_nodes,
+            graph_edges = payload$graph_edges,
+            generated_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")
+          ),
+          quiet = TRUE,
+          envir = new.env(parent = globalenv())
+        )
+
+        ok <- file.copy(rendered, file, overwrite = TRUE)
+        if (!isTRUE(ok)) {
+          stop("Could not write exported report.")
+        }
+      }
+    )
   })
 }
 
@@ -512,7 +920,7 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   terms <- unique(terms)
   if (length(terms) == 0) return(character(0))
 
-  defs <- setNames(rep("", length(terms)), terms)
+  defs <- stats::setNames(rep("", length(terms)), terms)
   for (term in terms) {
     idx <- which(data$matched_term == term)[1]
     row <- data[idx, , drop = FALSE]
@@ -521,13 +929,84 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   defs
 }
 
-.build_vis_graph_data <- function(edges, definition_lookup) {
+.build_term_source_lookup <- function(data) {
+  if (is.null(data) || nrow(data) == 0) return(character(0))
+
+  out <- character(0)
+  for (i in seq_len(nrow(data))) {
+    term <- as.character(data$matched_term[[i]])
+    term <- trimws(term)
+    if (is.na(term) || !nzchar(term)) next
+
+    has_ipbes <- FALSE
+    has_ipcc <- FALSE
+
+    if ("ipbes_concept" %in% names(data)) {
+      v <- as.character(data$ipbes_concept[[i]])
+      has_ipbes <- !is.na(v) && nzchar(trimws(v))
+    }
+    if (!has_ipbes && "ipbes_data" %in% names(data) && length(data$ipbes_data) >= i) {
+      d <- data$ipbes_data[[i]]
+      has_ipbes <- !is.null(d) && nrow(d) > 0
+    }
+
+    if ("ipcc_term" %in% names(data)) {
+      v <- as.character(data$ipcc_term[[i]])
+      has_ipcc <- !is.na(v) && nzchar(trimws(v))
+    }
+    if (!has_ipcc && "ipcc_data" %in% names(data) && length(data$ipcc_data) >= i) {
+      d <- data$ipcc_data[[i]]
+      has_ipcc <- !is.null(d) && nrow(d) > 0
+    }
+
+    source <- if (has_ipbes && has_ipcc) {
+      "both"
+    } else if (has_ipbes) {
+      "ipbes"
+    } else if (has_ipcc) {
+      "ipcc"
+    } else {
+      "unknown"
+    }
+
+    existing <- if (term %in% names(out)) unname(out[[term]]) else ""
+    if (!nzchar(existing) || identical(existing, "unknown")) {
+      out[[term]] <- source
+    } else if (!identical(source, "unknown") && !identical(existing, source)) {
+      out[[term]] <- "both"
+    }
+  }
+
+  out
+}
+
+.source_shape <- function(source) {
+  source <- tolower(trimws(as.character(source)))
+  out <- rep("dot", length(source))
+  out[source == "ipbes"] <- "triangle"
+  out[source == "ipcc"] <- "square"
+  out[source == "both"] <- "diamond"
+  out
+}
+
+.source_label <- function(source) {
+  source <- tolower(trimws(as.character(source)))
+  out <- rep("Unknown", length(source))
+  out[source == "ipbes"] <- "IPBES"
+  out[source == "ipcc"] <- "IPCC"
+  out[source == "both"] <- "IPBES + IPCC"
+  out
+}
+
+.build_vis_graph_data <- function(edges, definition_lookup, source_lookup = character(0)) {
   if (is.null(edges) || nrow(edges) == 0) {
     return(list(
       nodes = data.frame(
         id = character(),
         label = character(),
         title = character(),
+        group = character(),
+        shape = character(),
         level = integer(),
         value = numeric(),
         color.background = character(),
@@ -574,8 +1053,16 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   roots <- setdiff(unique(edges$parent_term), unique(edges$child_term))
   if (length(roots) == 0) roots <- unique(edges$parent_term)
   is_root <- node_terms %in% roots
+  node_source <- if (!is.null(source_lookup) && length(source_lookup) > 0) {
+    unname(source_lookup[node_terms])
+  } else {
+    rep(NA_character_, length(node_terms))
+  }
+  node_source[is.na(node_source) | !nzchar(node_source)] <- "unknown"
+  node_source_label <- .source_label(node_source)
 
-  node_title <- vapply(node_terms, function(term) {
+  node_title <- vapply(seq_along(node_terms), function(i) {
+    term <- node_terms[[i]]
     definition <- if (!is.null(definition_lookup) && term %in% names(definition_lookup)) {
       definition_lookup[[term]]
     } else {
@@ -590,6 +1077,7 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     paste0(
       "<div style='max-width:460px; white-space:normal;'>",
       "<strong>", htmltools::htmlEscape(term), "</strong><br/>",
+      "<span><strong>Source:</strong> ", htmltools::htmlEscape(node_source_label[[i]]), "</span><br/>",
       "<span>", htmltools::htmlEscape(definition), "</span>",
       "</div>"
     )
@@ -599,17 +1087,15 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     id = node_terms,
     label = node_terms,
     title = node_title,
+    group = node_source_label,
+    shape = .source_shape(node_source),
     level = levels_df$level,
     value = ifelse(is_root, pmax(70, pmin(110, 10 + node_degree)), pmin(40, 6 + node_degree)),
     color.background = unname(level_cols[as.character(levels_df$level)]),
     color.border = "#334155",
     font.color = "#111827",
-    font.size = ifelse(is_root, 34, 22),
-    font.vadjust = ifelse(is_root, -30, 0),
-    scaling.label.min = ifelse(is_root, 20, 18),
-    scaling.label.max = ifelse(is_root, 38, 36),
-    scaling.label.maxVisible = ifelse(is_root, 44, 40),
-    scaling.label.drawThreshold = 0,
+    font.size = ifelse(is_root, 36, 32),
+    font.vadjust = ifelse(is_root, -140, 0),
     stringsAsFactors = FALSE
   )
 
@@ -655,7 +1141,7 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   root_nodes <- trees$node_sets
   if (length(roots) == 0) return(node_terms)
 
-  priority <- setNames(rep(length(roots) + 1L, length(node_terms)), node_terms)
+  priority <- stats::setNames(rep(length(roots) + 1L, length(node_terms)), node_terms)
   for (i in seq_along(roots)) {
     covered <- root_nodes[[i]]
     matched <- intersect(node_terms, covered)
@@ -693,7 +1179,11 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   )
 }
 
-.build_vis_hierarchy_network <- function(graph_data, click_input_id = "node_click") {
+.build_vis_hierarchy_network <- function(
+    graph_data,
+    click_input_id = "node_click",
+    view_input_id = "graph_view"
+) {
   if (is.null(graph_data) || nrow(graph_data$nodes) == 0) {
     nodes <- data.frame(
       id = "none",
@@ -717,28 +1207,46 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     visNetwork::visHierarchicalLayout(
       direction = "UD",
       sortMethod = "directed",
-      levelSeparation = 190,
-      nodeSpacing = 320,
-      treeSpacing = 380,
-      blockShifting = TRUE,
-      edgeMinimization = TRUE,
+      levelSeparation = 230,
+      nodeSpacing = 180,
+      treeSpacing = 220,
+      blockShifting = FALSE,
+      edgeMinimization = FALSE,
       parentCentralization = TRUE
     ) |>
     visNetwork::visNodes(
-      shape = "dot",
-      font = list(size = 14, face = "Segoe UI"),
-      scaling = list(
-        label = list(
-          enabled = TRUE,
-          min = 10,
-          max = 24,
-          drawThreshold = 0
-        )
-      )
+      font = list(size = 18, face = "Segoe UI")
+    ) |>
+    visNetwork::visGroups(
+      groupname = "IPBES",
+      shape = "triangle"
+    ) |>
+    visNetwork::visGroups(
+      groupname = "IPCC",
+      shape = "square"
+    ) |>
+    visNetwork::visGroups(
+      groupname = "IPBES + IPCC",
+      shape = "diamond"
+    ) |>
+    visNetwork::visGroups(
+      groupname = "Unknown",
+      shape = "dot"
+    ) |>
+    visNetwork::visLegend(
+      useGroups = TRUE,
+      position = "right",
+      main = "Node Shapes",
+      zoom = FALSE
     ) |>
     visNetwork::visEdges(
       arrows = list(to = list(enabled = TRUE, scaleFactor = 0.5)),
-      smooth = FALSE
+      smooth = list(
+        enabled = TRUE,
+        type = "cubicBezier",
+        forceDirection = "vertical",
+        roundness = 0.16
+      )
     ) |>
     visNetwork::visInteraction(
       hover = TRUE,
@@ -751,14 +1259,37 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     visNetwork::visEvents(
       click = sprintf(
         "function(params) {
+           var pos = this.getViewPosition();
+           Shiny.setInputValue('%s', {
+             x: pos.x, y: pos.y, scale: this.getScale(), nonce: Date.now()
+           }, {priority: 'event'});
            if (params.nodes && params.nodes.length > 0) {
              Shiny.setInputValue('%s', params.nodes[0], {priority: 'event'});
            } else {
              Shiny.setInputValue('%s', '', {priority: 'event'});
            }
          }",
+        view_input_id,
         click_input_id,
         click_input_id
+      ),
+      dragEnd = sprintf(
+        "function(params) {
+           var pos = this.getViewPosition();
+           Shiny.setInputValue('%s', {
+             x: pos.x, y: pos.y, scale: this.getScale(), nonce: Date.now()
+           }, {priority: 'event'});
+         }",
+        view_input_id
+      ),
+      zoom = sprintf(
+        "function(params) {
+           var pos = this.getViewPosition();
+           Shiny.setInputValue('%s', {
+             x: pos.x, y: pos.y, scale: this.getScale(), nonce: Date.now()
+           }, {priority: 'event'});
+         }",
+        view_input_id
       )
     )
 }
@@ -833,6 +1364,95 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
   unique(visited)
 }
 
+.ensure_acyclic_edges <- function(edges) {
+  if (is.null(edges) || nrow(edges) == 0) return(edges)
+
+  edges <- edges[order(-edges$score, edges$child_term, edges$parent_term), , drop = FALSE]
+  keep <- rep(FALSE, nrow(edges))
+  child_of <- list()
+
+  path_exists <- function(start, target, adj) {
+    if (is.null(start) || is.null(target)) return(FALSE)
+    start <- as.character(start)
+    target <- as.character(target)
+    if (!nzchar(start) || !nzchar(target)) return(FALSE)
+    if (identical(start, target)) return(TRUE)
+
+    visited <- character(0)
+    queue <- start
+    while (length(queue) > 0) {
+      node <- queue[[1]]
+      queue <- queue[-1]
+      if (identical(node, target)) return(TRUE)
+      nbr <- adj[[node]]
+      if (is.null(nbr) || length(nbr) == 0) next
+      nbr <- unique(as.character(nbr))
+      nbr <- setdiff(nbr, visited)
+      if (length(nbr) == 0) next
+      visited <- c(visited, nbr)
+      queue <- c(queue, nbr)
+    }
+    FALSE
+  }
+
+  for (i in seq_len(nrow(edges))) {
+    parent <- as.character(edges$parent_term[i])
+    child <- as.character(edges$child_term[i])
+    if (!nzchar(parent) || !nzchar(child)) next
+    # Adding parent -> child would create a cycle if child can already reach parent.
+    if (isTRUE(path_exists(child, parent, child_of))) next
+    keep[i] <- TRUE
+    existing <- child_of[[parent]]
+    if (is.null(existing)) {
+      child_of[[parent]] <- child
+    } else {
+      child_of[[parent]] <- unique(c(existing, child))
+    }
+  }
+
+  out <- edges[keep, , drop = FALSE]
+  row.names(out) <- NULL
+  out
+}
+
+# ---- Export helpers ---------------------------------------------------------
+
+.export_report_template_path <- function() {
+  if (exists(".pkg_file", mode = "function")) {
+    path <- .pkg_file("rmarkdown", "graph_export_report.Rmd")
+    if (nzchar(path) && file.exists(path)) return(path)
+  }
+  file.path(getwd(), "inst", "rmarkdown", "graph_export_report.Rmd")
+}
+
+.export_fmt_score <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  if (is.na(x)) return("NA")
+  sprintf("%.1f%%", 100 * x)
+}
+
+.export_flatten_grouped_sources <- function(grouped, source_col) {
+  if (is.null(grouped) || nrow(grouped) == 0 || !(source_col %in% names(grouped))) {
+    return("\u2014")
+  }
+  vals <- as.character(grouped[[source_col]])
+  vals <- vals[!is.na(vals) & nzchar(trimws(vals))]
+  if (length(vals) == 0) return("\u2014")
+  vals <- gsub("\\n+", "; ", vals)
+  paste(vals, collapse = " | ")
+}
+
+.export_flatten_grouped_defs <- function(grouped) {
+  if (is.null(grouped) || nrow(grouped) == 0 || !("definition" %in% names(grouped))) {
+    return("\u2014")
+  }
+  defs <- as.character(grouped$definition)
+  defs <- defs[!is.na(defs) & nzchar(trimws(defs))]
+  if (length(defs) == 0) return("\u2014")
+  defs <- gsub("\\s+", " ", defs)
+  paste(defs, collapse = " || ")
+}
+
 # ---- Cache helpers ----------------------------------------------------------
 
 .hierarchy_cache_path <- function(cache_dir) {
@@ -870,6 +1490,24 @@ mod_graph_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
 .load_hierarchy_cache <- function(cache_dir, expected_meta) {
   path <- .hierarchy_cache_path(cache_dir)
   if (!file.exists(path)) return(NULL)
+  obj <- tryCatch(readRDS(path), error = function(e) NULL)
+  if (is.null(obj) || !is.list(obj) || is.null(obj$meta) || is.null(obj$edges)) return(NULL)
+  if (!identical(obj$meta, expected_meta)) return(NULL)
+  obj$edges
+}
+
+.packaged_hierarchy_cache_path <- function() {
+  if (exists(".pkg_file", mode = "function")) {
+    path <- .pkg_file("extdata", "hierarchy_edges_cache.rds")
+    if (nzchar(path) && file.exists(path)) return(path)
+  }
+  local_path <- file.path(getwd(), "inst", "extdata", "hierarchy_edges_cache.rds")
+  if (file.exists(local_path)) local_path else ""
+}
+
+.load_packaged_hierarchy_cache <- function(expected_meta) {
+  path <- .packaged_hierarchy_cache_path()
+  if (!nzchar(path)) return(NULL)
   obj <- tryCatch(readRDS(path), error = function(e) NULL)
   if (is.null(obj) || !is.list(obj) || is.null(obj$meta) || is.null(obj$edges)) return(NULL)
   if (!identical(obj$meta, expected_meta)) return(NULL)

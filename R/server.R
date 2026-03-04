@@ -29,14 +29,6 @@ build_server <- function(cache_dir, initial_data, enable_live_update = TRUE) {
       mod_update_ipcc_server("update_ipcc", cache_dir, merged_rv)
     }
 
-    # -- Table module --------------------------------------------------------
-    mod_table_server(
-      id          = "main_table",
-      merged_rv   = merged_rv,
-      cache_dir   = cache_dir,
-      highlight_terms_rv = highlight_terms_rv
-    )
-
     # -- Hierarchy graph module ----------------------------------------------
     mod_graph_server(
       id = "main_graph",

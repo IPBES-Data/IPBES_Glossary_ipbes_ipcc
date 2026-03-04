@@ -17,6 +17,7 @@ between definitions.
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
 - `inst/extdata/merged_glossary_cache.rds`
+- `inst/extdata/hierarchy_edges_cache.rds`
 
 These are shipped with the package and available on first startup.
 
@@ -129,6 +130,17 @@ Important detail:
 - Duplicates are intentionally kept in the similarity inputs, so repeated
   assessment/report definitions contribute to the averages.
 
+### 6.4 How to interpret the similarity percentages
+
+- Similarity values are lexical (token-overlap based), not semantic/paraphrase
+  understanding.
+- `100%` means the cleaned token-frequency representation is identical.
+- High values generally indicate very similar wording.
+- Mid values often indicate partial overlap in terminology.
+- Low values indicate mostly different wording/vocabulary.
+- These measures are best used for ranking/comparison, not as absolute proof of
+  conceptual equivalence.
+
 ## 7. Word-by-Word Difference (LCS Diff)
 
 Word-level diff uses Longest Common Subsequence (LCS) over word tokens.
@@ -211,13 +223,24 @@ Candidate gates:
 
 Default display threshold in the graph UI is `min_score = 0.65`.
 
+Interpretation guidance:
+
+- Higher SS scores indicate stronger evidence that the parent term subsumes the
+  child term.
+- The score combines:
+  - lexical containment in term names (`lex_sub`)
+  - parent-token containment in child definitions (`def_contain`)
+  - overall definition similarity (`def_sim`)
+- Raising `Minimum subsumption score` keeps only stronger, more conservative
+  edges; lowering it adds weaker/less certain edges.
+
 ### 10.2 Graph interaction model
 
 - Click a node to select its connected tree (ancestors + descendants).
 - Selected tree remains colored; non-linked nodes/edges are greyed.
 - Click background to clear selection.
-- Use `Focus Selected Tree` to fit/pan/zoom to the selected tree.
 - Use `Focus Previous Tree` / `Focus Next Tree` to navigate top-level trees.
+- Use `Reset View` to fit/pan/zoom back to the currently selected tree.
 - Top-level trees are arranged left-to-right by descending tree size (ties:
   alphabetical by root term).
 - Root labels are rendered above root nodes with stronger visual emphasis.
@@ -227,11 +250,37 @@ All edges above the minimum score threshold are shown (no max-edges truncation).
 Selection is shared with the main table: selected graph terms are highlighted in
 the table rows.
 
-### 10.3 Graph caching
+### 10.3 Graph controls and tooltips
+
+The graph controls include inline hover tooltips (`title` attributes) that
+explain each control:
+
+- `Select Tree`: choose the currently plotted tree (type-ahead filtering).
+- `Sort trees alphabetically`: toggle selector ordering (alphabetical vs
+  descending node count).
+- `Focus Previous Tree` / `Focus Next Tree`: move through trees following the
+  selector ordering.
+- `Reset View`: reset pan/zoom to fit the selected tree.
+- `Minimum subsumption score`: filter edges to `score >= threshold`.
+  Higher values keep only stronger parent -> child relations.
+- `Keep only best parent per child`: at current threshold, retain only the
+  strongest incoming edge for each child term.
+- `Export format`: choose `HTML (offline)` or `PDF (print)`.
+- `Export`: generate a report with current settings, a graph snapshot, the
+  selected-tree directed-edge table, and the selected-tree glossary table.
+  In HTML exports, the graph is interactive (zoom, pan, node dragging, and
+  hover tooltips).
+
+### 10.4 Graph caching
 
 Hierarchy edge scoring is cached in:
 
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/hierarchy_edges_cache.rds`
+
+If runtime cache is absent (for example on hosted cold starts), the app falls
+back to bundled cache:
+
+- `inst/extdata/hierarchy_edges_cache.rds`
 
 Cache is invalidated by a fingerprint over merged term/definition content.
 
@@ -282,5 +331,21 @@ This regenerates:
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
 - `inst/extdata/merged_glossary_cache.rds`
+- `inst/extdata/hierarchy_edges_cache.rds`
+
+If you already updated one or both CSV files in `inst/extdata/` and only need
+to refresh bundled caches, run:
+
+```r
+system("Rscript inst/scripts/update_bundled_caches.R")
+```
+
+Use `--force` to rebuild even when metadata indicates caches are current.
+
+To scrape a fresh IPCC snapshot and then refresh all bundled caches in one step:
+
+```r
+system("Rscript inst/scripts/scrape_ipcc_and_update_caches.R")
+```
 
 Then rebuild/reinstall package as needed.

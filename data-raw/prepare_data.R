@@ -211,6 +211,8 @@ source(file.path(repo_root, "R", "data_ipcc.R"))
 source(file.path(repo_root, "R", "similarity_text.R"))
 source(file.path(repo_root, "R", "data_merge.R"))
 source(file.path(repo_root, "R", "mod_table.R"))
+source(file.path(repo_root, "R", "hierarchy_terms.R"))
+source(file.path(repo_root, "R", "mod_graph.R"))
 
 ipbes_long <- load_ipbes(path = ipbes_dest)
 ipbes_sum  <- summarise_ipbes(ipbes_long)
@@ -229,5 +231,20 @@ merged_cache_path <- file.path(extdata_dir, "merged_glossary_cache.rds")
 saveRDS(list(meta = cache_meta, merged = merged), merged_cache_path)
 cat(sprintf("Saved startup cache (%d rows) to %s\n",
             nrow(merged), merged_cache_path))
+
+# Build bundled hierarchy edge cache so graph is available immediately.
+hier_edges <- compute_term_hierarchy(
+  merged_data = merged,
+  min_score = 0,
+  best_parent_only = FALSE
+)
+hier_cache <- list(
+  meta = .hierarchy_cache_meta(merged),
+  edges = hier_edges
+)
+hier_cache_path <- file.path(extdata_dir, "hierarchy_edges_cache.rds")
+saveRDS(hier_cache, hier_cache_path)
+cat(sprintf("Saved hierarchy cache (%d edges) to %s\n",
+            nrow(hier_edges), hier_cache_path))
 
 cat("\n=== Done. Commit inst/extdata/ to git. ===\n")

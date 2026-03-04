@@ -39,27 +39,33 @@ run_app <- function(
 }
 
 # Resolve package version safely.
-# - Installed package: use utils::packageVersion()
-# - Source deployment (e.g., shinyapps appDir): fall back to DESCRIPTION
+# - Prefer DESCRIPTION version (source checkout / appDir deployments)
+# - Fall back to installed package version
 .package_version_safe <- function(package = "glossary.ipbes.ipcc") {
-  ver <- tryCatch(
-    as.character(utils::packageVersion(package)),
-    error = function(e) ""
-  )
-  if (nzchar(ver)) return(ver)
-
   root <- tryCatch(
     if (exists(".source_pkg_root", mode = "function")) .source_pkg_root() else "",
     error = function(e) ""
   )
-  desc_path <- if (nzchar(root)) file.path(root, "DESCRIPTION") else file.path(getwd(), "DESCRIPTION")
-  if (file.exists(desc_path)) {
+
+  desc_candidates <- c(
+    if (nzchar(root)) file.path(root, "DESCRIPTION") else "",
+    file.path(getwd(), "DESCRIPTION")
+  )
+  desc_candidates <- unique(desc_candidates[nzchar(desc_candidates)])
+
+  for (desc_path in desc_candidates) {
+    if (!file.exists(desc_path)) next
     dcf <- tryCatch(read.dcf(desc_path), error = function(e) NULL)
     if (!is.null(dcf) && "Version" %in% colnames(dcf)) {
       ver <- trimws(dcf[1, "Version"])
+      if (nzchar(ver)) return(ver)
     }
   }
 
+  ver <- tryCatch(
+    as.character(utils::packageVersion(package)),
+    error = function(e) ""
+  )
   if (!nzchar(ver)) "unknown" else ver
 }
 

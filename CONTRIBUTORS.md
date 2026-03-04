@@ -15,11 +15,11 @@
   - URL: https://claude.ai/claude-code
 
 - **Codex** (OpenAI) — AI assistant used for iterative implementation,
-  refactoring, and releases `0.2.0`, `0.2.1`, `0.5.0`, and `0.6.0`
-  - Agent: Codex v0.6.0
+  refactoring, and releases `0.2.0`, `0.2.1`, `0.5.0`, `0.6.0`, and `0.7.0`
+  - Agent: Codex v0.7.0
   - Model: GPT-5
   - Mode: Default mode
-  - Date: 2026-02-27
+  - Date: 2026-03-04
   - URL: https://openai.com
 
 ---

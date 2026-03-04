@@ -1,0 +1,170 @@
+---
+title: "IPBES ↔ IPCC Graph Export"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    self_contained: true
+  pdf_document:
+    toc: true
+params:
+  settings: !r list()
+  graph_png: ""
+  graph_nodes: !r data.frame()
+  graph_edges: !r data.frame()
+  edges_df: !r data.frame()
+  glossary_df: !r data.frame()
+  generated_at: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## Export Metadata
+
+- Generated at: `r params$generated_at`
+- Rows in directed-edge table: `r if (is.null(params$edges_df)) 0 else nrow(params$edges_df)`
+- Rows in glossary table: `r if (is.null(params$glossary_df)) 0 else nrow(params$glossary_df)`
+
+## Current Settings
+
+```{r settings}
+settings_df <- data.frame(
+  Setting = names(params$settings),
+  Value = vapply(params$settings, function(x) {
+    if (is.null(x)) return("")
+    x <- as.character(x)
+    if (!length(x)) return("")
+    x[[1]]
+  }, character(1)),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(settings_df, format = "simple")
+```
+
+## Similarity and SS Score Explanation
+
+### Definition similarity measures (percentages)
+
+- `Within IPBES`: mean pairwise cosine similarity among IPBES definitions of a term.
+- `Within IPCC`: mean pairwise cosine similarity among IPCC definitions of a term.
+- `Between All`: mean cosine similarity across all cross pairs (`IPBES x IPCC`).
+
+How computed:
+
+- lowercase, punctuation removed, whitespace tokenization, stopword filtering,
+  no stemming/lemmatization
+- cosine similarity on token-frequency vectors
+
+How to read:
+
+- `100%`: identical cleaned token-frequency representation
+- high: very similar wording
+- mid: partial lexical overlap
+- low: mostly different wording
+- lexical comparison only (not a semantic/paraphrase model)
+
+### Directed subsumption score (SS)
+
+Graph edge score (`parent -> child`):
+
+`score = 0.55 * lex_sub + 0.25 * def_contain + 0.20 * def_sim`
+
+Where:
+
+- `lex_sub`: fraction of parent term tokens found in child term tokens
+- `def_contain`: fraction of parent term tokens found in child definition text
+- `def_sim`: cosine similarity between combined parent/child definitions
+
+Interpretation:
+
+- higher SS score => stronger evidence for parent subsuming child
+- raising the minimum SS threshold keeps fewer, stronger edges
+- lowering the threshold includes weaker/less certain edges
+
+## Graph Snapshot
+
+```{r graph}
+if (knitr::is_html_output()) {
+  if (requireNamespace("visNetwork", quietly = TRUE) &&
+      is.data.frame(params$graph_nodes) &&
+      nrow(params$graph_nodes) > 0) {
+    visNetwork::visNetwork(
+      nodes = params$graph_nodes,
+      edges = params$graph_edges,
+      width = "100%",
+      height = "760px"
+    ) |>
+      visNetwork::visHierarchicalLayout(
+        direction = "UD",
+        sortMethod = "directed",
+        levelSeparation = 230,
+        nodeSpacing = 180,
+        treeSpacing = 220,
+        blockShifting = FALSE,
+        edgeMinimization = FALSE,
+        parentCentralization = TRUE
+      ) |>
+      visNetwork::visNodes(
+        shape = "dot",
+        font = list(size = 18, face = "Segoe UI")
+      ) |>
+      visNetwork::visEdges(
+        arrows = list(to = list(enabled = TRUE, scaleFactor = 0.5)),
+        smooth = list(
+          enabled = TRUE,
+          type = "cubicBezier",
+          forceDirection = "vertical",
+          roundness = 0.16
+        )
+      ) |>
+      visNetwork::visInteraction(
+        hover = TRUE,
+        navigationButtons = TRUE,
+        zoomView = TRUE,
+        dragView = TRUE,
+        dragNodes = TRUE
+      ) |>
+      visNetwork::visPhysics(enabled = FALSE)
+  } else {
+    cat("Interactive graph was not available. Falling back to static image.\n\n")
+    if (is.character(params$graph_png) && nzchar(params$graph_png) && file.exists(params$graph_png)) {
+      knitr::include_graphics(params$graph_png)
+    } else {
+      cat("Graph image was not available during export.")
+    }
+  }
+} else {
+  if (is.character(params$graph_png) && nzchar(params$graph_png) && file.exists(params$graph_png)) {
+    knitr::include_graphics(params$graph_png)
+  } else {
+    cat("Graph image was not available during export.")
+  }
+}
+```
+
+## Top Directed Edges (Selected Tree)
+
+```{r edges}
+if (is.null(params$edges_df) || nrow(params$edges_df) == 0) {
+  cat("No directed edges available for the selected tree.")
+} else {
+  knitr::kable(params$edges_df, format = "simple")
+}
+```
+
+## Glossary Table (Selected Tree)
+
+```{r glossary}
+if (is.null(params$glossary_df) || nrow(params$glossary_df) == 0) {
+  cat("No glossary rows available for the selected tree.")
+} else {
+  knitr::kable(params$glossary_df, format = "simple")
+}
+```

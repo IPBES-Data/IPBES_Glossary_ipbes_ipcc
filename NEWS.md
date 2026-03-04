@@ -1,16 +1,29 @@
-# glossary.ipbes.ipcc (development version)
+# glossary.ipbes.ipcc 0.7.0
 
 ## Improvements
 
-* Graph tab usability updates:
-  - removed the `Max edges` control and always displays all filtered edges
-  - added `Focus Previous Tree` / `Focus Next Tree` navigation controls
-  - keeps top-level trees ordered left-to-right by descending tree size
-    (ties resolved alphabetically by root term)
-* Graph readability updates:
-  - increased root-node label prominence and positioned root labels above nodes
-  - preserved label style attributes during proxy selection updates
-* Styling updates for the new graph tree-navigation controls.
+* Graph tab redesign and navigation:
+  - graph is now the primary view with tree-focused controls
+  - added deterministic tree navigation (`Focus Previous Tree` / `Focus Next Tree`)
+  - keeps top-level trees ordered left-to-right by descending tree size (ties alphabetically)
+* Graph readability and interaction updates:
+  - improved root label visibility and placement above root nodes
+  - preserved node label styling during selection/proxy updates
+  - added source-based node shapes (`IPBES`, `IPCC`, `IPBES + IPCC`)
+  - switched to built-in `visNetwork` legend for node-shape mapping
+* Table behavior updates for node-driven workflows:
+  - graph selection now highlights only the selected term in the Glossary table
+  - highlighted rows are sorted to the top in both:
+    - Glossary Table
+    - Top Directed Edges
+* Export and reporting improvements:
+  - added export support (HTML/PDF) for graph settings and selected-tree tables
+  - added bundled export template under `inst/rmarkdown/`
+* Bundled cache and data-refresh tooling:
+  - added bundled hierarchy cache snapshot (`inst/extdata/hierarchy_edges_cache.rds`)
+  - added `inst/scripts/update_bundled_caches.R`
+  - added `inst/scripts/scrape_ipcc_and_update_caches.R`
+  - deployment script validates bundled cache presence before deployment
 
 # glossary.ipbes.ipcc 0.6.0
 

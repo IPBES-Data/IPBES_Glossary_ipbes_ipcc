@@ -90,27 +90,11 @@ build_ui <- function(enable_live_update = TRUE) {
 
     shiny::hr(style = "margin:0.5rem 0 1rem 0;"),
 
-    # ---- Main content tabs -------------------------------------------------
-    shiny::tabsetPanel(
-      id = "main_view",
-      type = "tabs",
-      shiny::tabPanel(
-        title = "Table",
-        shiny::fluidRow(
-          shiny::column(
-            width = 12,
-            mod_table_ui("main_table")
-          )
-        )
-      ),
-      shiny::tabPanel(
-        title = "Graph",
-        shiny::fluidRow(
-          shiny::column(
-            width = 12,
-            mod_graph_ui("main_graph")
-          )
-        )
+    # ---- Main content: graph + selected-tree tables -----------------------
+    shiny::fluidRow(
+      shiny::column(
+        width = 12,
+        mod_graph_ui("main_graph")
       )
     ),
 

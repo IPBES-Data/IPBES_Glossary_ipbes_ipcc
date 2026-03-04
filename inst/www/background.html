@@ -383,6 +383,8 @@ Method</a>
 similarity</a></li>
 <li><a href="#displayed-metrics" id="toc-displayed-metrics">Displayed
 metrics</a></li>
+<li><a href="#how-to-interpret-the-similarity-percentages" id="toc-how-to-interpret-the-similarity-percentages">How to interpret
+the similarity percentages</a></li>
 </ul></li>
 <li><a href="#word-by-word-diff-method" id="toc-word-by-word-diff-method">Word-by-Word Diff Method</a></li>
 <li><a href="#overview-vs-expanded-detail" id="toc-overview-vs-expanded-detail">Overview vs Expanded Detail</a>
@@ -398,6 +400,8 @@ and Caching</a></li>
 <ul>
 <li><a href="#directed-subsumption-score" id="toc-directed-subsumption-score">Directed subsumption score</a></li>
 <li><a href="#graph-interaction-model" id="toc-graph-interaction-model">Graph interaction model</a></li>
+<li><a href="#graph-controls-and-tooltips" id="toc-graph-controls-and-tooltips">Graph controls and
+tooltips</a></li>
 <li><a href="#graph-caching" id="toc-graph-caching">Graph
 caching</a></li>
 </ul></li>
@@ -424,6 +428,7 @@ differences between definitions.</p>
 <li><code>inst/extdata/ipbes_glossary.csv</code></li>
 <li><code>inst/extdata/ipcc_glossary.csv</code></li>
 <li><code>inst/extdata/merged_glossary_cache.rds</code></li>
+<li><code>inst/extdata/hierarchy_edges_cache.rds</code></li>
 </ul>
 <p>These are shipped with the package and are available at first
 startup.</p>
@@ -550,6 +555,20 @@ Mean cosine over all cross pairs IPBES x IPCC.<br />
 calculations, so repeated report/assessment entries still
 contribute.</p>
 </div>
+<div id="how-to-interpret-the-similarity-percentages" class="section level2">
+<h2>How to interpret the similarity percentages</h2>
+<ul>
+<li>Similarity values are lexical (token-overlap based), not
+semantic/paraphrase understanding.</li>
+<li><code>100%</code> means the cleaned token-frequency representation
+is identical.</li>
+<li>High values generally indicate very similar wording.</li>
+<li>Mid values often indicate partial overlap in terminology.</li>
+<li>Low values indicate mostly different wording/vocabulary.</li>
+<li>These measures are best used for ranking/comparison, not as absolute
+proof of conceptual equivalence.</li>
+</ul>
+</div>
 </div>
 <div id="word-by-word-diff-method" class="section level1">
 <h1>Word-by-Word Diff Method</h1>
@@ -644,6 +663,21 @@ scoring</li>
 </ul>
 <p>Default display threshold in the graph UI is
 <code>min_score = 0.65</code>.</p>
+<p>Interpretation guidance:</p>
+<ul>
+<li>Higher SS scores indicate stronger evidence that the parent term
+subsumes the child term.</li>
+<li>The score combines:
+<ul>
+<li>lexical containment in term names (<code>lex_sub</code>)</li>
+<li>parent-token containment in child definitions
+(<code>def_contain</code>)</li>
+<li>overall definition similarity (<code>def_sim</code>)</li>
+</ul></li>
+<li>Raising <code>Minimum subsumption score</code> keeps only stronger,
+more conservative edges; lowering it adds weaker/less certain
+edges.</li>
+</ul>
 </div>
 <div id="graph-interaction-model" class="section level2">
 <h2>Graph interaction model</h2>
@@ -653,10 +687,10 @@ descendants).</li>
 <li>Selected tree remains colored; non-linked nodes/edges are
 greyed.</li>
 <li>Click background to clear selection.</li>
-<li>Use <code>Focus Selected Tree</code> to fit/pan/zoom to the selected
-tree.</li>
 <li>Use <code>Focus Previous Tree</code> / <code>Focus Next Tree</code>
 to navigate top-level trees.</li>
+<li>Use <code>Reset View</code> to fit/pan/zoom back to the currently
+selected tree.</li>
 <li>Top-level trees are arranged left-to-right by descending tree size
 (ties: alphabetical by root term).</li>
 <li>Root labels are rendered above root nodes with stronger visual
@@ -667,11 +701,42 @@ truncation).</p>
 <p>Selection is shared with the main table: selected graph terms are
 highlighted in the table rows.</p>
 </div>
+<div id="graph-controls-and-tooltips" class="section level2">
+<h2>Graph controls and tooltips</h2>
+<p>The graph controls include inline hover tooltips (<code>title</code>
+attributes) that explain each control:</p>
+<ul>
+<li><code>Select Tree</code>: choose the currently plotted tree
+(type-ahead filtering).</li>
+<li><code>Sort trees alphabetically</code>: toggle selector ordering
+(alphabetical vs descending node count).</li>
+<li><code>Focus Previous Tree</code> / <code>Focus Next Tree</code>:
+move through trees following the selector ordering.</li>
+<li><code>Reset View</code>: reset pan/zoom to fit the selected
+tree.</li>
+<li><code>Minimum subsumption score</code>: filter edges to
+<code>score &gt;= threshold</code>. Higher values keep only stronger
+parent -&gt; child relations.</li>
+<li><code>Keep only best parent per child</code>: at current threshold,
+retain only the strongest incoming edge for each child term.</li>
+<li><code>Export format</code>: choose <code>HTML (offline)</code> or
+<code>PDF (print)</code>.</li>
+<li><code>Export</code>: generate a report with current settings, a
+graph snapshot, the selected-tree directed-edge table, and the
+selected-tree glossary table. In HTML exports, the graph is interactive
+(zoom, pan, node dragging, and hover tooltips).</li>
+</ul>
+</div>
 <div id="graph-caching" class="section level2">
 <h2>Graph caching</h2>
 <p>Hierarchy edge scoring is cached in:</p>
 <ul>
 <li><code>tools::R_user_dir(&quot;glossary.ipbes.ipcc&quot;, &quot;cache&quot;)/hierarchy_edges_cache.rds</code></li>
+</ul>
+<p>If runtime cache is absent (for example on hosted cold starts), the
+app falls back to bundled cache:</p>
+<ul>
+<li><code>inst/extdata/hierarchy_edges_cache.rds</code></li>
 </ul>
 <p>Cache is invalidated by a fingerprint over merged term/definition
 content.</p>
@@ -705,7 +770,17 @@ glossary.ipbes.ipcc::run_app()</code></pre>
 <li><code>inst/extdata/ipbes_glossary.csv</code></li>
 <li><code>inst/extdata/ipcc_glossary.csv</code></li>
 <li><code>inst/extdata/merged_glossary_cache.rds</code></li>
+<li><code>inst/extdata/hierarchy_edges_cache.rds</code></li>
 </ul>
+<p>If you already updated one or both CSV files in
+<code>inst/extdata/</code> and only need to refresh bundled caches,
+run:</p>
+<pre class="r"><code>system(&quot;Rscript inst/scripts/update_bundled_caches.R&quot;)</code></pre>
+<p>Use <code>--force</code> to rebuild even when metadata indicates
+caches are current.</p>
+<p>To scrape a fresh IPCC snapshot and then refresh all bundled caches
+in one step:</p>
+<pre class="r"><code>system(&quot;Rscript inst/scripts/scrape_ipcc_and_update_caches.R&quot;)</code></pre>
 </div>
 
 

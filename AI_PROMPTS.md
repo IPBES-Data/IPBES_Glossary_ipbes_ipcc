@@ -366,6 +366,57 @@ run_app()
 
 ---
 
+## Session 7 — 2026-03-04
+
+**Tool**: Codex
+**Model**: GPT-5
+**Mode**: Default mode
+
+### Main requests handled
+
+- Finalize graph-first UX and release readiness for `0.7.0`.
+- Improve graph semantics and readability:
+  - add source-based node shapes (`IPBES`, `IPCC`, `IPBES + IPCC`)
+  - use `visNetwork` built-in legend in the graph
+- Align node selection behavior across tables:
+  - only selected node highlighted in Glossary table
+  - highlighted rows sorted to top in Glossary and Top Directed Edges tables
+- Add bundled cache maintenance tooling:
+  - script to rebuild bundled caches from packaged CSV sources
+  - script to scrape IPCC glossary and immediately refresh bundled caches
+- Keep startup and deployment cache-safe by bundling hierarchy cache and
+  validating required cache artifacts during deployment.
+
+### Files substantially updated in this session
+
+- `R/mod_graph.R`
+- `R/mod_table.R`
+- `R/ui.R`
+- `R/server.R`
+- `R/app.R`
+- `inst/www/custom.css`
+- `inst/rmarkdown/graph_export_report.Rmd`
+- `inst/scripts/update_bundled_caches.R`
+- `inst/scripts/scrape_ipcc_and_update_caches.R`
+- `scripts/deploy_shinyapps.R`
+- `data-raw/prepare_data.R`
+- `inst/extdata/ipbes_glossary.csv`
+- `inst/extdata/merged_glossary_cache.rds`
+- `inst/extdata/hierarchy_edges_cache.rds`
+- `BACKGROUND.md`
+- `vignettes/background.Rmd`
+- `inst/www/background.html`
+- `DESCRIPTION`
+- `NEWS.md`
+- `CONTRIBUTORS.md`
+- `AI_PROMPTS.md`
+
+### Release target
+
+- Package release prepared as `0.7.0`
+
+---
+
 ## How to continue development with another AI agent
 
 Provide this file and the approved plan at

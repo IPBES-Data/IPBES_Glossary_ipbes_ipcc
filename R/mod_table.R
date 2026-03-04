@@ -21,8 +21,16 @@ mod_table_ui <- function(id) {
 #' @param cache_dir Path to the cache directory.
 #' @param highlight_terms_rv Optional [shiny::reactiveVal()] containing a
 #'   character vector of terms to highlight in the table.
+#' @param filter_terms_rv Optional reactive returning a character vector of
+#'   terms; when provided, only these terms are shown in the table.
 #' @keywords internal
-mod_table_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL) {
+mod_table_server <- function(
+    id,
+    merged_rv,
+    cache_dir,
+    highlight_terms_rv = NULL,
+    filter_terms_rv = NULL
+) {
   shiny::moduleServer(id, function(input, output, session) {
     prepared_rv <- shiny::reactiveVal(NULL)
     detail_registered <- new.env(parent = emptyenv())
@@ -40,7 +48,25 @@ mod_table_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
     display_data <- shiny::reactive({
       data <- prepared_rv()
       if (is.null(data) || nrow(data) == 0) return(data)
-      data[order(data$matched_term, na.last = TRUE), ]
+      if (!is.null(filter_terms_rv)) {
+        filter_terms <- as.character(filter_terms_rv())
+        filter_terms <- unique(filter_terms[!is.na(filter_terms) & nzchar(filter_terms)])
+        data <- data[data$matched_term %in% filter_terms, , drop = FALSE]
+      }
+      if (is.null(data) || nrow(data) == 0) return(data)
+
+      highlight_terms <- if (!is.null(highlight_terms_rv)) {
+        as.character(highlight_terms_rv())
+      } else {
+        character(0)
+      }
+      highlight_terms <- unique(highlight_terms[!is.na(highlight_terms) & nzchar(highlight_terms)])
+
+      is_highlight <- data$matched_term %in% highlight_terms
+      highlight_order <- match(data$matched_term, highlight_terms)
+      highlight_order[is.na(highlight_order)] <- length(highlight_terms) + seq_len(sum(is.na(highlight_order)))
+
+      data[order(!is_highlight, highlight_order, data$matched_term, na.last = TRUE), ]
     })
 
     # -- Reactable output ------------------------------------------------------
@@ -54,8 +80,13 @@ mod_table_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
       }
 
       if (is.null(data) || nrow(data) == 0) {
+        msg <- if (!is.null(filter_terms_rv)) {
+          "No selected tree terms. Click a graph node to populate this table."
+        } else {
+          "No data available. Run data-raw/prepare_data.R first."
+        }
         return(reactable::reactable(
-          data.frame(Message = "No data available. Run data-raw/prepare_data.R first."),
+          data.frame(Message = msg),
           bordered = TRUE
         ))
       }
@@ -73,7 +104,7 @@ mod_table_server <- function(id, merged_rv, cache_dir, highlight_terms_rv = NULL
         onClick      = "expand",
         searchable   = TRUE,
         pagination   = TRUE,
-        defaultPageSize = 25,
+        defaultPageSize = 100,
         striped      = TRUE,
         highlight    = TRUE,
         resizable    = TRUE,
