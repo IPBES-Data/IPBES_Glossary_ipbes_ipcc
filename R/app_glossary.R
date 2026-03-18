@@ -37,10 +37,14 @@ run_glossary <- function(
 }
 
 .build_glossary_ui <- function() {
-  sib_logo_url <- "https://www.sib.swiss/sites/default/files/2023-08/sib_logo2023.png"
-  repo_url <- "https://github.com/rkrug/glossary_ipbes_ipcc"
   issues_url <- "https://github.com/rkrug/glossary_ipbes_ipcc/issues"
+  about_url <- "custom/about_glossary.html"
   app_version <- .app_version_string()
+  app_date <- paste(
+    as.integer(format(Sys.Date(), "%d")),
+    format(Sys.Date(), "%B"),
+    format(Sys.Date(), "%Y")
+  )
 
   shiny::fluidPage(
     shiny::tags$head(
@@ -55,42 +59,28 @@ run_glossary <- function(
          });"
       ))
     ),
-    shiny::titlePanel(title = NULL, windowTitle = "IPBES and IPCC Glossary explorer"),
+    shiny::titlePanel(title = NULL, windowTitle = "IPBES and IPCC Glossary Explorer"),
     htmltools::div(
-      htmltools::h2("IPBES and IPCC Glossary explorer", style = "margin-bottom: 0;"),
+      htmltools::h2("IPBES and IPCC Glossary Explorer", style = "margin-bottom: 0; font-size: 2.8rem;"),
       htmltools::p(
-        style = "color:#555; font-size:1.2rem; font-weight:600; margin:2px 0 0 0;",
-        paste0("Version ", app_version)
+        style = "color:#555; font-size:1.45rem; font-weight:600; margin:2px 0 0 0;",
+        paste0("Version ", app_version, " (", app_date, ")")
       ),
       htmltools::p(
-        style = "color:#666; font-size:1rem; margin-top:4px;",
-        "Choose a source, type a term, then hover/click highlighted terms in definitions to navigate."
-      ),
-      htmltools::p(
-        style = "color:#666; font-size:0.95rem; margin-top:2px;",
-        "Data: ",
-        htmltools::a("IPBES Glossary", href = "https://www.ipbes.net/glossary", target = "_blank"),
+        style = "color:#666; font-size:1.12rem; margin-top:2px;",
+        "Issues: ",
+        htmltools::a("GitHub Issues", href = issues_url, target = "_blank"),
         " | ",
-        htmltools::a("IPCC Glossary", href = "https://apps.ipcc.ch/glossary/search.php", target = "_blank"),
-        " | GitHub Repo: ",
-        htmltools::a("rkrug/glossary_ipbes_ipcc", href = repo_url, target = "_blank"),
-        " | Issues: ",
-        htmltools::a("GitHub Issues", href = issues_url, target = "_blank")
+        shiny::actionLink(
+          inputId = "about_open",
+          label = "About",
+          style = "display:inline; padding:0; border:none; background:none; font-size:inherit; vertical-align:baseline;"
+        )
       )
     ),
     shiny::fluidRow(
       shiny::column(
-        width = 4,
-        shiny::radioButtons(
-          inputId = "source_mode",
-          label = "Source",
-          choices = c("IPBES" = "ipbes", "IPCC" = "ipcc", "Both" = "both"),
-          selected = "both",
-          inline = TRUE
-        )
-      ),
-      shiny::column(
-        width = 8,
+        width = 5,
         shiny::selectizeInput(
           inputId = "term",
           label = "Term",
@@ -102,30 +92,51 @@ run_glossary <- function(
             closeAfterSelect = TRUE,
             selectOnTab = TRUE
           )
+        ),
+        shiny::radioButtons(
+          inputId = "source_mode",
+          label = "Source",
+          choices = c("IPBES" = "ipbes", "IPCC" = "ipcc", "Both" = "both"),
+          selected = "both",
+          inline = TRUE
         )
       )
-    ),
-    htmltools::div(
-      class = "glossary-explorer-help",
-      htmltools::tags$strong("How to use:"),
-      " Hover highlighted terms to see definitions; click them to jump to that term."
     ),
     shiny::uiOutput("glossary_definition_view"),
     shiny::hr(),
     htmltools::div(
       class = "app-attribution",
-      htmltools::img(
-        src = sib_logo_url,
-        alt = "SIB Swiss Institute of Bioinformatics",
-        class = "sib-logo"
-      ),
       htmltools::div(
-        class = "copyright-note",
-        htmltools::HTML("&copy; 2026 Rainer M Krug (Rainer.Krug@sib.swiss) &middot; "),
-        htmltools::a(
-          "SIB Swiss Institute of Bioinformatics",
-          href = "https://www.sib.swiss/",
-          target = "_blank"
+        style = "display:flex; justify-content:space-between; align-items:center; width:100%; gap:1rem;",
+        htmltools::div(
+          class = "data-links",
+          style = "text-align:left;",
+          "Data: ",
+          htmltools::a("IPBES Glossary", href = "https://www.ipbes.net/glossary", target = "_blank"),
+          " | ",
+          htmltools::a("IPCC Glossary", href = "https://apps.ipcc.ch/glossary/search.php", target = "_blank")
+        ),
+        htmltools::div(
+          class = "copyright-note",
+          style = "text-align:right;",
+          "Developed by ",
+          htmltools::a(
+            "Rainer M Krug",
+            href = "mailto:Rainer.Krug@SIB.swiss,Rainer.Krug@senckenberg.de",
+            target = "_blank"
+          ),
+          " - ",
+          htmltools::a(
+            "SIB Swiss Institute of Bioinformatics",
+            href = "https://www.sib.swiss/",
+            target = "_blank"
+          ),
+          " and ",
+          htmltools::a(
+            "Senckenberg Nature Research",
+            href = "https://www.senckenberg.de/en/",
+            target = "_blank"
+          )
         )
       )
     )
@@ -134,8 +145,24 @@ run_glossary <- function(
 
 .build_glossary_server <- function(initial_data) {
   function(input, output, session) {
+    about_url <- "custom/about_glossary.html"
     merged_rv <- shiny::reactiveVal(initial_data)
     active_term_rv <- shiny::reactiveVal(NULL)
+
+    shiny::observeEvent(input$about_open, {
+      shiny::showModal(
+        shiny::modalDialog(
+          title = "About",
+          size = "l",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close"),
+          htmltools::tags$iframe(
+            src = about_url,
+            style = "width:100%; height:68vh; border:0; border-radius:6px;"
+          )
+        )
+      )
+    }, ignoreInit = TRUE)
 
     mode_r <- shiny::reactive({
       mode <- tolower(trimws(as.character(input$source_mode)))
@@ -154,17 +181,18 @@ run_glossary <- function(
       choices <- terms_r()
       selected <- active_term_rv()
       selected <- .glossary_resolve_choice(selected, choices)
-      if (!nzchar(selected)) {
-        selected <- if (length(choices) > 0) choices[[1]] else ""
-      }
-      active_term_rv(if (nzchar(selected)) selected else NULL)
+      has_selected <- nzchar(selected)
+      active_term_rv(if (has_selected) selected else NULL)
       shiny::updateSelectizeInput(
         session,
         inputId = "term",
         choices = choices,
-        selected = if (nzchar(selected)) selected else NULL,
+        selected = if (has_selected) selected else "",
         server = TRUE
       )
+      if (!has_selected) {
+        session$sendInputMessage("term", list(value = ""))
+      }
     }, ignoreInit = FALSE)
 
     shiny::observeEvent(input$term, {
@@ -172,6 +200,8 @@ run_glossary <- function(
       selected <- .glossary_resolve_choice(input$term, choices)
       if (nzchar(selected)) {
         active_term_rv(selected)
+      } else {
+        active_term_rv(NULL)
       }
     }, ignoreInit = TRUE)
 
@@ -196,7 +226,7 @@ run_glossary <- function(
       if (nzchar(selected) && selected %in% choices) {
         return(selected)
       }
-      if (length(choices) > 0) choices[[1]] else ""
+      ""
     })
 
     dict_r <- shiny::reactive({
@@ -214,15 +244,14 @@ run_glossary <- function(
     output$glossary_definition_view <- shiny::renderUI({
       row <- selected_row_r()
       if (is.null(row) || nrow(row) == 0) {
-        return(htmltools::div(
-          class = "glossary-empty",
-          "No definitions available for this source/term."
-        ))
+        return(NULL)
       }
 
       mode <- mode_r()
       dict <- dict_r()
       hover_lookup <- hover_lookup_r()
+      see_also_terms <- .glossary_collect_link_terms(row, mode, dict)
+      see_also_ui <- .glossary_see_also_ui(see_also_terms, mode)
 
       if (identical(mode, "ipbes")) {
         return(
@@ -233,7 +262,8 @@ run_glossary <- function(
               source = "ipbes",
               dict = dict,
               hover_lookup = hover_lookup
-            )
+            ),
+            see_also_ui
           )
         )
       }
@@ -247,7 +277,8 @@ run_glossary <- function(
               source = "ipcc",
               dict = dict,
               hover_lookup = hover_lookup
-            )
+            ),
+            see_also_ui
           )
         )
       }
@@ -265,7 +296,8 @@ run_glossary <- function(
           source = "ipcc",
           dict = dict,
           hover_lookup = hover_lookup
-        )
+        ),
+        see_also_ui
       )
     })
   }
@@ -364,6 +396,7 @@ run_glossary <- function(
     return(.glossary_definition_section_ui(
       title = "IPBES Definitions",
       source_label = "Assessments",
+      source_class = "ipbes",
       grouped = grouped,
       dict = dict,
       hover_lookup = hover_lookup
@@ -379,6 +412,7 @@ run_glossary <- function(
   .glossary_definition_section_ui(
     title = "IPCC Definitions",
     source_label = "Reports",
+    source_class = "ipcc",
     grouped = grouped,
     dict = dict,
     hover_lookup = hover_lookup
@@ -388,13 +422,31 @@ run_glossary <- function(
 .glossary_definition_section_ui <- function(
     title,
     source_label,
+    source_class,
     grouped,
     dict,
     hover_lookup
 ) {
+  section_class <- paste("glossary-source-section", paste0("glossary-source-", source_class))
+  section_style <- if (identical(source_class, "ipbes")) {
+    "background:#f2fbf3; border-color:#d7efd9;"
+  } else if (identical(source_class, "ipcc")) {
+    "background:#f2f8ff; border-color:#d6e7fb;"
+  } else {
+    NULL
+  }
+  card_style <- if (identical(source_class, "ipbes")) {
+    "background:#e4f3e5; border-color:#c7e4ca;"
+  } else if (identical(source_class, "ipcc")) {
+    "background:#e3efff; border-color:#c7dcf6;"
+  } else {
+    NULL
+  }
+
   if (is.null(grouped) || nrow(grouped) == 0) {
     return(htmltools::div(
-      class = "glossary-source-section",
+      class = section_class,
+      style = section_style,
       htmltools::h4(title),
       htmltools::div(class = "glossary-empty", "No definitions available.")
     ))
@@ -409,25 +461,168 @@ run_glossary <- function(
 
     htmltools::div(
       class = "glossary-def-card",
-      htmltools::div(
-        class = "glossary-def-head",
-        htmltools::tags$strong(src)
-      ),
-      htmltools::div(
-        class = "glossary-def-body",
-        htmltools::HTML(def_html)
-      )
+      style = card_style,
+        htmltools::div(
+          class = "glossary-def-body",
+          style = "font-size:1.36rem; line-height:1.65;",
+          htmltools::HTML(paste0("&ldquo;", def_html, "&rdquo;"))
+        ),
+        htmltools::div(
+          class = "glossary-def-meta",
+          style = "display:block; margin-top:1.1em; padding-top:0.1em; font-size:1.06rem; line-height:1.4; color:#556176;",
+          htmltools::tags$strong(style = "font-size:inherit; font-weight:700;", "As defined in: "),
+          src
+        )
     )
   })
 
   htmltools::div(
-    class = "glossary-source-section",
+    class = section_class,
+    style = section_style,
     htmltools::h4(title),
     htmltools::div(
       class = "glossary-source-caption",
       htmltools::tags$strong(source_label), " shown in bold; identical definitions are grouped."
     ),
     cards
+  )
+}
+
+.glossary_collect_link_terms <- function(row, mode, dict) {
+  if (is.null(row) || nrow(row) == 0 || is.null(dict) || length(dict$terms) == 0) {
+    return(list(ipbes = character(0), ipcc = character(0), all = character(0)))
+  }
+
+  add_defs <- function(detail_df) {
+    if (is.null(detail_df) || nrow(detail_df) == 0 || !("definition" %in% names(detail_df))) return(character(0))
+    v <- trimws(as.character(detail_df$definition))
+    v[!is.na(v) & nzchar(v)]
+  }
+
+  collect_from_df <- function(detail_df) {
+    defs <- add_defs(detail_df)
+    if (length(defs) == 0) return(character(0))
+    terms <- unlist(lapply(defs, .glossary_find_terms_in_text, dict = dict), use.names = FALSE)
+    if (length(terms) == 0) return(character(0))
+    terms[!duplicated(terms)]
+  }
+
+  ipbes_terms <- character(0)
+  ipcc_terms <- character(0)
+
+  if (identical(mode, "ipbes") || identical(mode, "both")) {
+    ipbes_df <- if ("ipbes_data" %in% names(row) && length(row$ipbes_data) > 0) row$ipbes_data[[1]] else NULL
+    ipbes_terms <- collect_from_df(ipbes_df)
+  }
+  if (identical(mode, "ipcc") || identical(mode, "both")) {
+    ipcc_df <- if ("ipcc_data" %in% names(row) && length(row$ipcc_data) > 0) row$ipcc_data[[1]] else NULL
+    ipcc_terms <- collect_from_df(ipcc_df)
+  }
+
+  all_terms <- c(ipbes_terms, ipcc_terms)
+  if (length(all_terms) > 0) all_terms <- all_terms[!duplicated(all_terms)]
+
+  list(
+    ipbes = ipbes_terms,
+    ipcc = ipcc_terms,
+    all = all_terms
+  )
+}
+
+.glossary_find_terms_in_text <- function(text, dict) {
+  if (is.null(text) || is.na(text) || !nzchar(trimws(text))) return(character(0))
+  if (is.null(dict) || length(dict$terms) == 0 || length(dict$patterns) == 0) return(character(0))
+
+  txt <- as.character(text)
+  n <- nchar(txt)
+  if (n < 1L) return(character(0))
+
+  occupied <- rep(FALSE, n)
+  found <- list()
+
+  for (i in seq_along(dict$terms)) {
+    term <- dict$terms[[i]]
+    pattern <- dict$patterns[[i]]
+    mm <- gregexpr(pattern, txt, perl = TRUE, ignore.case = TRUE)[[1]]
+    if (length(mm) == 1 && mm[[1]] == -1) next
+    ll <- attr(mm, "match.length")
+    for (j in seq_along(mm)) {
+      start <- as.integer(mm[[j]])
+      mlen <- as.integer(ll[[j]])
+      end <- start + mlen - 1L
+      if (start < 1L || end < start || end > n) next
+      if (any(occupied[start:end])) next
+      occupied[start:end] <- TRUE
+      found[[length(found) + 1L]] <- list(start = start, term = term)
+    }
+  }
+
+  if (length(found) == 0) return(character(0))
+  found <- found[order(vapply(found, function(x) x$start, integer(1)))]
+  terms <- vapply(found, function(x) as.character(x$term), character(1))
+  terms[!duplicated(terms)]
+}
+
+.glossary_see_also_ui <- function(terms, mode = "both") {
+  if (is.null(terms) || length(terms$all) == 0) {
+    return(htmltools::div(
+      class = "glossary-source-section glossary-see-also",
+      htmltools::h4("See also"),
+      htmltools::div(class = "glossary-empty", "No linked glossary terms in the definitions shown above.")
+    ))
+  }
+
+  link_line <- function(values, label) {
+    if (length(values) == 0) return(NULL)
+    links <- lapply(seq_along(values), function(i) {
+      term <- as.character(values[[i]])
+      htmltools::tagList(
+        htmltools::tags$a(
+          href = "#",
+          class = "glossary-term-link glossary-see-link",
+          `data-term` = term,
+          term
+        ),
+        if (i < length(values)) htmltools::HTML(", ") else NULL
+      )
+    })
+    htmltools::div(
+      class = "glossary-see-links",
+      htmltools::tags$strong(paste0(label, ": ")),
+      links
+    )
+  }
+
+  all_links <- lapply(seq_along(terms$all), function(i) {
+    term <- as.character(terms$all[[i]])
+    htmltools::tagList(
+      htmltools::tags$a(
+        href = "#",
+        class = "glossary-term-link glossary-see-link",
+        `data-term` = term,
+        term
+      ),
+      if (i < length(terms$all)) htmltools::HTML(", ") else NULL
+    )
+  })
+
+  see_content <- if (identical(mode, "both")) {
+    htmltools::tagList(
+      link_line(terms$ipbes, "From IPBES"),
+      link_line(terms$ipcc, "From IPCC")
+    )
+  } else {
+    htmltools::div(class = "glossary-see-links", all_links)
+  }
+
+  htmltools::div(
+    class = "glossary-source-section glossary-see-also",
+    htmltools::h4("See also"),
+    htmltools::div(
+      class = "glossary-source-caption",
+      "Hyperlinks found in the definitions shown above."
+    ),
+    see_content
   )
 }
 

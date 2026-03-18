@@ -1,3 +1,21 @@
+# glossary.ipbes.ipcc 0.9.0
+
+## Improvements
+
+* Updated glossary explorer layout and metadata presentation:
+  - moved `Term` and `Source` controls into a single left column
+  - set title to `IPBES and IPCC Glossary Explorer` (Title Case)
+  - app header now shows `Version <DESCRIPTION version> (D Month YYYY)`
+* Refined glossary explorer header/footer links and attribution:
+  - removed top GitHub repository link while keeping issue tracker link
+  - replaced footer block with:
+    `Developed by Rainer M Krug - SIB Swiss Institute of Bioinformatics and Senckenberg Nature Research`
+  - made `Rainer M Krug` a single-click mail link addressed to both institutional emails
+* Adjusted glossary definition card typography for readability:
+  - kept definition body text larger
+  - increased `As defined in:` text size while preserving visual hierarchy
+  - retained extra vertical spacing between definition body and source line
+
 # glossary.ipbes.ipcc 0.8.0
 
 ## Improvements

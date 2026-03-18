@@ -1,17 +1,16 @@
 Package: glossary.ipbes.ipcc
 Title: Compare IPBES and IPCC Glossaries
-Version: 0.8.0
+Version: 0.9.0
 Author: IPBES TSU Knowledge and Data [aut, cre] (ORCID:
-    <https://orcid.org/0000-0003-4511-3407>), Claude Code [ctb], Codex [ctb]
+    <https://orcid.org/0000-0003-4511-3407>), Aidin Niamir [ctb, rev]
 Maintainer: IPBES TSU Knowledge and Data <aidin.niamir@senckenberg.de>
 Authors@R: c(
     person("IPBES TSU Knowledge and Data", role = c("aut", "cre"),
            email = "aidin.niamir@senckenberg.de",
            comment = c(ORCID = "0000-0003-4511-3407")),
-    person("Claude Code", role = "ctb",
-           comment = "AI assistant (claude-sonnet-4-6, Plan mode); https://claude.ai/claude-code"),
-    person("Codex", role = "ctb",
-           comment = "AI assistant (Codex v0.8.0, model GPT-5, Default mode); https://openai.com"))
+    person("Aidin Niamir", role = c("ctb", "rev"),
+           email = "aidin.niamir@senckenberg.de",
+           comment = c(ORCID = "0000-0003-4511-3407")))
 Description: Shiny applications to compare and explore the IPBES biodiversity
     glossary and the IPCC climate change glossary. The comparison app aligns
     terms, computes similarity scores, shows word-level differences, and
