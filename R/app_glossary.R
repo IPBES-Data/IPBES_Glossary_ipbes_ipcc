@@ -671,7 +671,9 @@ run_glossary <- function(
   if (is.null(value) || is.na(value) || !nzchar(trimws(value))) return("\u2014")
   parts <- strsplit(as.character(value), "\n", fixed = TRUE)[[1]]
   parts <- parts[nzchar(trimws(parts))]
-  if (length(parts) == 0) "\u2014" else paste(parts, collapse = "; ")
+  if (length(parts) == 0) return("\u2014")
+  parts <- vapply(parts, .expand_ipcc_report_name, character(1), USE.NAMES = FALSE)
+  paste(parts, collapse = "; ")
 }
 
 .glossary_hover_lookup <- function(data, mode = "both") {

@@ -1,3 +1,16 @@
+# glossary.ipbes.ipcc 1.0.0
+
+## Improvements
+
+* Added bundled IPCC report-name mapping data:
+  - new file `inst/extdata/ipcc_report_names.csv`
+  - abbreviation-to-long-name expansion is now used in displayed report
+    source lines.
+* Updated glossary explorer and comparison views to display long IPCC report
+  names in definition metadata (`As defined in:`).
+* Fixed report-name lookup fallback to prevent `subscript out of bounds`
+  errors for report codes not present in the mapping file.
+
 # glossary.ipbes.ipcc 0.9.8
 
 ## Improvements

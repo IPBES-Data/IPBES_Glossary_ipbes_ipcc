@@ -23,10 +23,14 @@ in-definition term navigation.
 
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
+- `inst/extdata/ipcc_report_names.csv`
 - `inst/extdata/merged_glossary_cache.rds`
 - `inst/extdata/hierarchy_edges_cache.rds`
 
 These are shipped with the package and available on first startup.
+
+`ipcc_report_names.csv` maps IPCC report abbreviations (for example `AR6`,
+`SR15`) to their long report names for UI display.
 
 ### 2.2 Runtime cache (user cache dir)
 

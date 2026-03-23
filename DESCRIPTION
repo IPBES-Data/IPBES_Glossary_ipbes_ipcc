@@ -1,6 +1,6 @@
 Package: glossary.ipbes.ipcc
 Title: Compare IPBES and IPCC Glossaries
-Version: 0.9.8
+Version: 1.0.0
 Author: IPBES TSU Knowledge and Data [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-4511-3407>), Aidin Niamir [ctb, rev]
 Maintainer: IPBES TSU Knowledge and Data <aidin.niamir@senckenberg.de>

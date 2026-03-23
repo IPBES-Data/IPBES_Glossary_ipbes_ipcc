@@ -509,6 +509,42 @@ run_app()
 
 ---
 
+## Session 10 — 2026-03-23
+
+**Tool**: Codex  
+**Model**: GPT-5  
+**Mode**: Default mode
+
+### Main requests handled
+
+- Added bundled IPCC report abbreviation mapping as package data:
+  - `inst/extdata/ipcc_report_names.csv`
+- Added report-name expansion helpers and wired display formatting to use long
+  IPCC report names in:
+  - glossary explorer definition metadata
+  - comparison/table source labels
+- Fixed lookup fallback to avoid `subscript out of bounds` when an unknown
+  report abbreviation is encountered.
+- Prepared release metadata/docs for `1.0.0`.
+
+### Files substantially updated in this session
+
+- `R/ipcc_report_names.R`
+- `R/app_glossary.R`
+- `R/mod_table.R`
+- `inst/extdata/ipcc_report_names.csv`
+- `DESCRIPTION`
+- `NEWS.md`
+- `README.md`
+- `BACKGROUND.md`
+- `AI_PROMPTS.md`
+
+### Release target
+
+- Package release prepared as `1.0.0` and deployed to shinyapps.io
+
+---
+
 ## How to continue development with another AI agent
 
 Provide this file and the approved plan at

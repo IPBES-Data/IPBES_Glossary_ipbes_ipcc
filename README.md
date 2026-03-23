@@ -25,6 +25,7 @@ An R package containing two Shiny apps for comparing and exploring the
   - hover to preview definitions and click highlighted terms to navigate
   - case-insensitive term matching and source-specific rendering
   - in-app `About` modal and footer `GitHub Issues` link for user guidance
+  - IPCC report sources shown with full report names (from bundled mapping)
 
 ## Installation
 
