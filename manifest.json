@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "locale": "C",
+  "locale": "en_US",
   "platform": "4.5.3",
   "metadata": {
     "appmode": "shiny",
@@ -17,7 +17,7 @@
   "packages": {
     "PKI": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "PKI",
         "Version": "0.1-15",
@@ -41,7 +41,7 @@
     },
     "R6": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "R6",
         "Title": "Encapsulated Classes with Reference Semantics",
@@ -68,7 +68,7 @@
     },
     "Rcpp": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "Rcpp",
         "Title": "Seamless R and C++ Integration",
@@ -98,7 +98,7 @@
     },
     "RcppTOML": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "RcppTOML",
         "Type": "Package",
@@ -127,7 +127,7 @@
     },
     "askpass": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "askpass",
         "Type": "Package",
@@ -155,7 +155,7 @@
     },
     "base64enc": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "base64enc",
         "Version": "0.1-6",
@@ -179,7 +179,7 @@
     },
     "bslib": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "bslib",
         "Title": "Custom 'Bootstrap' 'Sass' Themes for 'shiny' and 'rmarkdown'",
@@ -212,7 +212,7 @@
     },
     "cachem": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "cachem",
         "Version": "1.1.0",
@@ -240,7 +240,7 @@
     },
     "cli": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "cli",
         "Title": "Helpers for Developing Command Line Interfaces",
@@ -269,7 +269,7 @@
     },
     "commonmark": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "commonmark",
         "Type": "Package",
@@ -296,7 +296,7 @@
     },
     "curl": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "curl",
         "Type": "Package",
@@ -326,7 +326,7 @@
     },
     "digest": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "digest",
         "Authors@R": "c(person(\"Dirk\", \"Eddelbuettel\", role = c(\"aut\", \"cre\"), email = \"edd@debian.org\",\n                    comment = c(ORCID = \"0000-0001-6419-907X\")),\n             person(\"Antoine\", \"Lucas\", role=\"ctb\", comment = c(ORCID = \"0000-0002-8059-9767\")),\n             person(\"Jarek\", \"Tuszynski\", role=\"ctb\"),\n             person(\"Henrik\", \"Bengtsson\", role=\"ctb\", comment = c(ORCID = \"0000-0002-7579-5165\")),\n             person(\"Simon\", \"Urbanek\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2297-1732\")),\n             person(\"Mario\", \"Frasca\", role=\"ctb\"),\n             person(\"Bryan\", \"Lewis\", role=\"ctb\"),\n             person(\"Murray\", \"Stokely\", role=\"ctb\"),\n             person(\"Hannes\", \"Muehleisen\", role=\"ctb\", comment = c(ORCID = \"0000-0001-8552-0029\")),\n             person(\"Duncan\", \"Murdoch\", role=\"ctb\"),\n             person(\"Jim\", \"Hester\", role=\"ctb\", comment = c(ORCID = \"0000-0002-2739-7082\")),\n             person(\"Wush\", \"Wu\", role=\"ctb\", comment = c(ORCID = \"0000-0001-5180-0567\")),\n             person(\"Qiang\", \"Kou\", role=\"ctb\", comment = c(ORCID = \"0000-0001-6786-5453\")),\n             person(\"Thierry\", \"Onkelinx\", role=\"ctb\", comment = c(ORCID = \"0000-0001-8804-4216\")),\n             person(\"Michel\", \"Lang\", role=\"ctb\", comment = c(ORCID = \"0000-0001-9754-0393\")),\n             person(\"Viliam\", \"Simko\", role=\"ctb\"),\n             person(\"Kurt\", \"Hornik\", role=\"ctb\", comment = c(ORCID = \"0000-0003-4198-9911\")),\n             person(\"Radford\", \"Neal\", role=\"ctb\", comment = c(ORCID = \"0000-0002-2473-3407\")),\n             person(\"Kendon\", \"Bell\", role=\"ctb\", comment = c(ORCID = \"0000-0002-9093-8312\")),\n             person(\"Matthew\", \"de Queljoe\", role=\"ctb\"),\n             person(\"Dmitry\", \"Selivanov\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0492-6647\")),\n             person(\"Ion\", \"Suruceanu\", role=\"ctb\", comment = c(ORCID = \"0009-0005-6446-4909\")),\n             person(\"Bill\", \"Denney\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5759-428X\")),\n             person(\"Dirk\", \"Schumacher\", role=\"ctb\"),\n             person(\"András\", \"Svraka\", role=\"ctb\", comment = c(ORCID = \"0009-0008-8480-1329\")),\n             person(\"Sergey\", \"Fedorov\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5970-7233\")),\n             person(\"Will\", \"Landau\", role=\"ctb\", comment = c(ORCID = \"0000-0003-1878-3253\")),\n             person(\"Floris\", \"Vanderhaeghe\", role=\"ctb\", comment = c(ORCID = \"0000-0002-6378-6229\")),\n             person(\"Kevin\", \"Tappe\", role=\"ctb\"),\n             person(\"Harris\", \"McGehee\", role=\"ctb\"),\n             person(\"Tim\", \"Mastny\", role=\"ctb\"),\n             person(\"Aaron\", \"Peikert\", role=\"ctb\", comment = c(ORCID = \"0000-0001-7813-818X\")),\n             person(\"Mark\", \"van der Loo\", role=\"ctb\", comment = c(ORCID = \"0000-0002-9807-4686\")),\n             person(\"Chris\", \"Muir\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2555-3878\")),\n             person(\"Moritz\", \"Beller\", role=\"ctb\", comment = c(ORCID = \"0000-0003-4852-0526\")),\n             person(\"Sebastian\", \"Campbell\", role=\"ctb\", comment = c(ORCID = \"0009-0000-5948-4503\")),\n             person(\"Winston\", \"Chang\", role=\"ctb\", comment = c(ORCID = \"0000-0002-1576-2126\")),\n             person(\"Dean\", \"Attali\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5645-3493\")),\n             person(\"Michael\", \"Chirico\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0787-087X\")),\n             person(\"Kevin\", \"Ushey\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2880-7407\")),\n             person(\"Carl\", \"Pearson\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0701-7860\")))",
@@ -354,7 +354,7 @@
     },
     "dplyr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "dplyr",
@@ -387,7 +387,7 @@
     },
     "evaluate": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "evaluate",
@@ -415,7 +415,7 @@
     },
     "fastmap": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "fastmap",
         "Title": "Fast Data Structures",
@@ -440,7 +440,7 @@
     },
     "fontawesome": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "fontawesome",
@@ -469,7 +469,7 @@
     },
     "fs": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "fs",
         "Title": "Cross-Platform File System Operations Based on 'libuv'",
@@ -503,7 +503,7 @@
     },
     "generics": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "generics",
         "Title": "Common S3 Generics not Provided by Base R Methods Related to\nModel Fitting",
@@ -531,7 +531,7 @@
     },
     "glue": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "glue",
         "Title": "Interpreted String Literals",
@@ -562,7 +562,7 @@
     },
     "highr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "highr",
         "Type": "Package",
@@ -590,7 +590,7 @@
     },
     "htmltools": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "htmltools",
@@ -622,7 +622,7 @@
     },
     "htmlwidgets": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "htmlwidgets",
@@ -650,7 +650,7 @@
     },
     "httpuv": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "httpuv",
@@ -681,7 +681,7 @@
     },
     "httr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "httr",
         "Title": "Tools for Working with URLs and HTTP",
@@ -709,7 +709,7 @@
     },
     "jose": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "jose",
         "Type": "Package",
@@ -738,7 +738,7 @@
     },
     "jquerylib": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "jquerylib",
         "Title": "Obtain 'jQuery' as an HTML Dependency Object",
@@ -762,7 +762,7 @@
     },
     "jsonlite": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "jsonlite",
         "Version": "2.0.0",
@@ -789,7 +789,7 @@
     },
     "knitr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "knitr",
         "Type": "Package",
@@ -819,7 +819,7 @@
     },
     "later": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "later",
@@ -853,7 +853,7 @@
     },
     "lifecycle": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "lifecycle",
         "Title": "Manage the Life Cycle of your Package Functions",
@@ -882,7 +882,7 @@
     },
     "magrittr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "magrittr",
@@ -912,7 +912,7 @@
     },
     "memoise": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "memoise",
         "Title": "'Memoisation' of Functions",
@@ -937,7 +937,7 @@
     },
     "mime": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "mime",
         "Type": "Package",
@@ -963,7 +963,7 @@
     },
     "openssl": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "openssl",
         "Type": "Package",
@@ -992,7 +992,7 @@
     },
     "otel": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "otel",
         "Title": "OpenTelemetry R API",
@@ -1020,7 +1020,7 @@
     },
     "packrat": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "packrat",
@@ -1048,7 +1048,7 @@
     },
     "pillar": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "pillar",
         "Title": "Coloured Formatting for Columns",
@@ -1081,7 +1081,7 @@
     },
     "pkgconfig": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "pkgconfig",
         "Title": "Private Configuration for 'R' Packages",
@@ -1105,7 +1105,7 @@
     },
     "promises": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "promises",
@@ -1137,7 +1137,7 @@
     },
     "rappdirs": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "rappdirs",
@@ -1168,7 +1168,7 @@
     },
     "reactR": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "reactR",
         "Type": "Package",
@@ -1196,7 +1196,7 @@
     },
     "reactable": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "reactable",
         "Type": "Package",
@@ -1224,7 +1224,7 @@
     },
     "renv": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "renv",
         "Type": "Package",
@@ -1255,7 +1255,7 @@
     },
     "rlang": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "rlang",
         "Version": "1.1.7",
@@ -1288,7 +1288,7 @@
     },
     "rmarkdown": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "rmarkdown",
@@ -1319,7 +1319,7 @@
     },
     "rsconnect": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "rsconnect",
@@ -1350,7 +1350,7 @@
     },
     "rstudioapi": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "rstudioapi",
         "Title": "Safely Access the RStudio API",
@@ -1375,7 +1375,7 @@
     },
     "rvest": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "rvest",
         "Title": "Easily Harvest (Scrape) Web Pages",
@@ -1406,7 +1406,7 @@
     },
     "sass": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "sass",
@@ -1436,7 +1436,7 @@
     },
     "selectr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "selectr",
         "Type": "Package",
@@ -1461,7 +1461,7 @@
     },
     "shiny": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "shiny",
@@ -1491,7 +1491,7 @@
     },
     "snowflakeauth": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "snowflakeauth",
         "Title": "Authentication Helpers for 'Snowflake'",
@@ -1517,7 +1517,7 @@
     },
     "sourcetools": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "sourcetools",
         "Type": "Package",
@@ -1542,7 +1542,7 @@
     },
     "stringi": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "stringi",
         "Version": "1.8.7",
@@ -1572,7 +1572,7 @@
     },
     "stringr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "stringr",
         "Title": "Simple, Consistent Wrappers for Common String Operations",
@@ -1603,7 +1603,7 @@
     },
     "sys": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "sys",
         "Type": "Package",
@@ -1630,7 +1630,7 @@
     },
     "tibble": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "tibble",
         "Title": "Simple Data Frames",
@@ -1666,7 +1666,7 @@
     },
     "tidyselect": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "tidyselect",
         "Title": "Select from a Set of Strings",
@@ -1696,7 +1696,7 @@
     },
     "tinytex": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "tinytex",
         "Type": "Package",
@@ -1722,7 +1722,7 @@
     },
     "utf8": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "utf8",
         "Title": "Unicode Text Processing",
@@ -1750,7 +1750,7 @@
     },
     "vctrs": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "vctrs",
         "Title": "Vector Helpers",
@@ -1783,7 +1783,7 @@
     },
     "visNetwork": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "visNetwork",
         "Title": "Network Visualization using 'vis.js' Library",
@@ -1810,7 +1810,7 @@
     },
     "withr": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "withr",
         "Title": "Run Code 'With' Temporarily Modified Global State",
@@ -1840,7 +1840,7 @@
     },
     "xfun": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "xfun",
         "Type": "Package",
@@ -1869,7 +1869,7 @@
     },
     "xml2": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "xml2",
         "Title": "Parse XML",
@@ -1901,7 +1901,7 @@
     },
     "xtable": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Package": "xtable",
         "Version": "1.8-8",
@@ -1926,7 +1926,7 @@
     },
     "yaml": {
       "Source": "CRAN",
-      "Repository": null,
+      "Repository": "https://cloud.r-project.org",
       "description": {
         "Type": "Package",
         "Package": "yaml",
@@ -1955,11 +1955,119 @@
     }
   },
   "files": {
+    "..Rcheck/00check.log": {
+      "checksum": "7e9c4b1a4fdfebc14241f650d50155b9"
+    },
+    "..Rcheck/00install.out": {
+      "checksum": "a961577fce3dbe658b8ebe7184f99be6"
+    },
+    "..Rcheck/glossary.ipbes.ipcc-Ex.pdf": {
+      "checksum": "3ce4927710bf7cc5c1195371808c22cc"
+    },
+    "..Rcheck/glossary.ipbes.ipcc-Ex.R": {
+      "checksum": "9ef6a1dad0032a8a8d62c9118acb1808"
+    },
+    "..Rcheck/glossary.ipbes.ipcc-Ex.Rout": {
+      "checksum": "e44a4ec310490de949fd53419b6f6b49"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/DESCRIPTION": {
+      "checksum": "7479c98aa374b872725a9e1693cf8c11"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/extdata/hierarchy_edges_cache.rds": {
+      "checksum": "5efd6ae7965992d38800b25022839f9b"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/extdata/ipbes_glossary.csv": {
+      "checksum": "777ab9a0ec9ce8f89a832ad311e9e8f4"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/extdata/ipcc_glossary.csv": {
+      "checksum": "62c51b571ab6a9f5fd1bf1b3c6097015"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/extdata/merged_glossary_cache.rds": {
+      "checksum": "d649e27a42977907f4890d274d42653e"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/help/aliases.rds": {
+      "checksum": "ad122223264ce989b82d1d52076f04ee"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/help/AnIndex": {
+      "checksum": "bf52ee2b897e849251814b3aa8225a2f"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/help/glossary.ipbes.ipcc.rdb": {
+      "checksum": "dadd61386c2e80c6ee9301144f5d0be0"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/help/glossary.ipbes.ipcc.rdx": {
+      "checksum": "0199b403a234e64fd1c584dcd7e22673"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/help/paths.rds": {
+      "checksum": "4c850b15893ab29da20908ccd58003c7"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/html/00Index.html": {
+      "checksum": "a6d97fe83aaf15a60fb8b3c6497e1d99"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/html/R.css": {
+      "checksum": "8b9362669af13540a86a3ac6cf22f99d"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/INDEX": {
+      "checksum": "3ee9a8180595b3323f4f83236054335f"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/LICENSE": {
+      "checksum": "ff1d40ff5ae28bae33fd25b96ef0e861"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/features.rds": {
+      "checksum": "6e936bdf4dfd14911ddf370dc8063ab9"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/hsearch.rds": {
+      "checksum": "8dc3192a83a666e42b43cc5ae47fe2d9"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/links.rds": {
+      "checksum": "1b6b9b6ddfe873fe0c461a66bbaaeeb5"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/nsInfo.rds": {
+      "checksum": "7681f5c34cb829c81d5ddeb78cb6d234"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/package.rds": {
+      "checksum": "0569cd9c20df8f8748b00fd758709dca"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/Meta/Rd.rds": {
+      "checksum": "70231b0137e7f76b3ba3da175bd0ca19"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/NAMESPACE": {
+      "checksum": "9c084945e56804b4dae64cea7078c232"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/NEWS.md": {
+      "checksum": "ec57c722e0acfc6f8699edb9dcd7281a"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc": {
+      "checksum": "d6c68f1fe41ced6e98a766a3757313da"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc.rdb": {
+      "checksum": "f8da54f495a3eb43d89ffeb7f2462bfd"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc.rdx": {
+      "checksum": "8a632466a0140826264a0b9fd9aa4d68"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/rmarkdown/graph_export_report.Rmd": {
+      "checksum": "cf046bf264cc85e88ef81aa216b85a81"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/scripts/scrape_ipcc_and_update_caches.R": {
+      "checksum": "3a645c2c2077612e058213080330c6e4"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/scripts/update_bundled_caches.R": {
+      "checksum": "bbd9efec456041ae20b7d360496063d1"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/www/background.html": {
+      "checksum": "73756a2b671ba0c2659c7b4fa6814e59"
+    },
+    "..Rcheck/glossary.ipbes.ipcc/www/custom.css": {
+      "checksum": "6149ed5073131eea9d0326d453d99371"
+    },
+    ".cache_startup_bench/startup_merged_cache.rds": {
+      "checksum": "cc1f82fb92c3df6dd39534cc63e4f95b"
+    },
+    ".claude/settings.local.json": {
+      "checksum": "6e612758434ad8d223efe589f6bf80bd"
+    },
     ".github/workflows/R-CMD-check.yaml": {
       "checksum": "b162a2ce96f6674e0341ddc4a43308f0"
-    },
-    ".gitignore": {
-      "checksum": "26024960eba33f13f346bbd9549fb5cd"
     },
     ".Rbuildignore": {
       "checksum": "70ee18cc396268a3cf87c26e95b28486"
@@ -1970,8 +2078,11 @@
     "app_compare.R": {
       "checksum": "0377eea2c775046a1b629cfe060bea5b"
     },
-    "app.R": {
+    "app_glossary.R": {
       "checksum": "7ace1e5f044e946ecd8318154f6244fe"
+    },
+    "app.R": {
+      "checksum": "8a6b7b52494c0ffc5413aa40dab38332"
     },
     "BACKGROUND.md": {
       "checksum": "0ad1f905b0d2e60841a24811bc8d784a"
@@ -1990,6 +2101,342 @@
     },
     "DESCRIPTION": {
       "checksum": "ed01a3b6e25a12120cd3e7e1c4356dfb"
+    },
+    "glossary.ipbes.ipcc_0.2.1.tar.gz": {
+      "checksum": "ecd2efbf7d100a886f7694e8392fd9c8"
+    },
+    "glossary.ipbes.ipcc_0.5.0.tar.gz": {
+      "checksum": "c75e20e0f54a961ce1c0e9accbaa6e47"
+    },
+    "glossary.ipbes.ipcc_0.7.0.tar.gz": {
+      "checksum": "aaf2cba5a1d03d4e03b47c680a847ced"
+    },
+    "glossary.ipbes.ipcc_0.8.0.tar.gz": {
+      "checksum": "dc238928787b20119b4e8d6d87448f21"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/AI_PROMPTS.md": {
+      "checksum": "6fadbf016c43dedb7d5a9821ab1746f5"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/app_compare.R": {
+      "checksum": "0377eea2c775046a1b629cfe060bea5b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/app_glossary.R": {
+      "checksum": "7ace1e5f044e946ecd8318154f6244fe"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/build/vignette.rds": {
+      "checksum": "d696e145e13f39810e094a6d5639fab0"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/CONTRIBUTORS.md": {
+      "checksum": "d1205437a841cd68c054b1cf719b300b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/DESCRIPTION": {
+      "checksum": "ee857e3520fd8d1af1bbeab80905af80"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/doc/background.html": {
+      "checksum": "4b5a04094342b2e059e159f604effe62"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/doc/background.Rmd": {
+      "checksum": "c4f2d0d63ecfc291d7461bc1f5a1a4ce"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/extdata/hierarchy_edges_cache.rds": {
+      "checksum": "5efd6ae7965992d38800b25022839f9b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/extdata/ipbes_glossary.csv": {
+      "checksum": "777ab9a0ec9ce8f89a832ad311e9e8f4"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/extdata/ipcc_glossary.csv": {
+      "checksum": "62c51b571ab6a9f5fd1bf1b3c6097015"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/extdata/merged_glossary_cache.rds": {
+      "checksum": "d649e27a42977907f4890d274d42653e"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/rmarkdown/graph_export_report.Rmd": {
+      "checksum": "cf046bf264cc85e88ef81aa216b85a81"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/scripts/scrape_ipcc_and_update_caches.R": {
+      "checksum": "3a645c2c2077612e058213080330c6e4"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/scripts/update_bundled_caches.R": {
+      "checksum": "bbd9efec456041ae20b7d360496063d1"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/www/background.html": {
+      "checksum": "4b5a04094342b2e059e159f604effe62"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/inst/www/custom.css": {
+      "checksum": "6149ed5073131eea9d0326d453d99371"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/LICENSE": {
+      "checksum": "ff1d40ff5ae28bae33fd25b96ef0e861"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/LICENSE-CC-BY-4.0.md": {
+      "checksum": "57b34b42e64f7badc60f4b05edf701ed"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/build_server.Rd": {
+      "checksum": "7e05cc12fef337c093e00a9d2997bc25"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/build_ui.Rd": {
+      "checksum": "ae3e42d56ee51492affa83a67aa25bfb"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/clean_html.Rd": {
+      "checksum": "59f628df673c95f8145a6389da2e4f24"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/compute_similarity_triplet.Rd": {
+      "checksum": "38cf3b9fbfe0e23c615aaf65a39f212c"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/compute_term_hierarchy.Rd": {
+      "checksum": "2c8da462ec1ad4028a3fa84f5f049c2e"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/compute_text_similarity.Rd": {
+      "checksum": "f71fbb7cd0e5b03a6999a5ca1bcad660"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/load_ipbes.Rd": {
+      "checksum": "c7aa61b1be1aa35fc4d84f0937e9f59e"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/load_ipcc.Rd": {
+      "checksum": "0eafc4f686383d0e3d43b06383b1fb33"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mean_between_similarity.Rd": {
+      "checksum": "e39212181534a0de614af3e74afe4af1"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mean_within_similarity.Rd": {
+      "checksum": "04091fd7708441e25e2b7d261d830216"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/merge_glossaries.Rd": {
+      "checksum": "b78b773f31ad4c2df035d745468925f1"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_graph_server.Rd": {
+      "checksum": "0e0a0511480d2556faac2102f94de83c"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_graph_ui.Rd": {
+      "checksum": "4583e3fb0cdfee60358d52ebc32c122c"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_table_server.Rd": {
+      "checksum": "e796bdf18878f93523e0c1df16ae8ab9"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_table_ui.Rd": {
+      "checksum": "bd3ade0ff0a24942bd0bc77652232d8e"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_update_ipcc_server.Rd": {
+      "checksum": "ae0cf58a760884ec7d3edfe6b08cc0dc"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/mod_update_ipcc_ui.Rd": {
+      "checksum": "99a5f7b1e1194a7b3fb03af42102f7c2"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/normalise_term.Rd": {
+      "checksum": "5e39122240abf621ceaac213e50aaa62"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/render_text_diff.Rd": {
+      "checksum": "962285c24c36ac5e335c88062003f94a"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/run_app.Rd": {
+      "checksum": "720c91dcbbfdc7f17c81373a465c81cf"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/run_glossary.Rd": {
+      "checksum": "9d8d65fed8aac9a57030931a6f4c3de9"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/scrape_ipcc.Rd": {
+      "checksum": "650430780ca22aab8d2989a0bee2823b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/similarity_bar_html.Rd": {
+      "checksum": "f593c842c0044f40d845a06bb6410bc0"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/similarity_triplet_html.Rd": {
+      "checksum": "befc5191ca6c7bac60110cfe0070b07b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/STOPWORDS.Rd": {
+      "checksum": "7b0a6eb810fb3d3b0be0f330d45580e0"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/strip_qualifier.Rd": {
+      "checksum": "f555f68eb120e1f8fd4d053101deeaa8"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/summarise_ipbes.Rd": {
+      "checksum": "0ffe6797b99cb1e144a8c263af821029"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/summarise_ipcc.Rd": {
+      "checksum": "a522b46691f4b59e2523502ba2492ae6"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/tokenise_text.Rd": {
+      "checksum": "b396164e5ce19ab152c2549cfcab9f2a"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/man/truncate_text.Rd": {
+      "checksum": "c05c221bc6ed44488d6ac16382f463db"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/NAMESPACE": {
+      "checksum": "9c084945e56804b4dae64cea7078c232"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/NEWS.md": {
+      "checksum": "06173b563a0ded820a654659da61536f"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/app_glossary.R": {
+      "checksum": "30781dc9bbeb488ce6d5cedee4e4d759"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/app.R": {
+      "checksum": "9f96c36e53e80cebda2e9c139fe93f43"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/data_ipbes.R": {
+      "checksum": "a66ce3df360222862b6e3e8cbc96acc9"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/data_ipcc.R": {
+      "checksum": "c2e861c28b95647133463b400d55da28"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/data_merge.R": {
+      "checksum": "5d7c288e59abf6e27561cddbad491e68"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/diff_text.R": {
+      "checksum": "4ece08706722e5e0ef10ea4ee663d50a"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/hierarchy_terms.R": {
+      "checksum": "8b8b75fc0bdbaeca088e5d9dc8538228"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/mod_graph.R": {
+      "checksum": "55c1a09b222a23dadb1f1877b3717367"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/mod_table.R": {
+      "checksum": "64122dc5f68211bfa7349b94b2944b64"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/mod_update_ipcc.R": {
+      "checksum": "097240f672c653b66adee607c49150c8"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/server.R": {
+      "checksum": "de64d7a881a253d5810aa33dc66cfb50"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/similarity_text.R": {
+      "checksum": "7ee6628a9e675f1a931edf96a461bb28"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/ui.R": {
+      "checksum": "86d001f760dfa6f52ae4e710d7ad0579"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/R/utils.R": {
+      "checksum": "403ba722150e75d5ecf8aa56d3cc87ee"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/README.md": {
+      "checksum": "f7597bc918429a19b3bf9f045bcd6424"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/scripts/deploy_shinyapps_compare.R": {
+      "checksum": "a88e6cff90e22182e93c31f1e27356cd"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/scripts/deploy_shinyapps_glossary.R": {
+      "checksum": "28b8796e4ae83c90213ad19a6b1e24b4"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00_pkg_src/glossary.ipbes.ipcc/vignettes/background.Rmd": {
+      "checksum": "c4f2d0d63ecfc291d7461bc1f5a1a4ce"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00check.log": {
+      "checksum": "d56326fea8b84dff3ba8da45d2de56f2"
+    },
+    "glossary.ipbes.ipcc.Rcheck/00install.out": {
+      "checksum": "a961577fce3dbe658b8ebe7184f99be6"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc-Ex.pdf": {
+      "checksum": "1f9764b00ac653e106abee0bdf20b6e7"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc-Ex.R": {
+      "checksum": "9ef6a1dad0032a8a8d62c9118acb1808"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc-Ex.Rout": {
+      "checksum": "54bdef733681f0303559bb0eba9296e0"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/DESCRIPTION": {
+      "checksum": "a396f1f7f0a1d0b9f3b75df7ec363e87"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/doc/background.html": {
+      "checksum": "4b5a04094342b2e059e159f604effe62"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/doc/background.Rmd": {
+      "checksum": "c4f2d0d63ecfc291d7461bc1f5a1a4ce"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/doc/index.html": {
+      "checksum": "99a3c92e2f03316e1790478193529856"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/extdata/hierarchy_edges_cache.rds": {
+      "checksum": "5efd6ae7965992d38800b25022839f9b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/extdata/ipbes_glossary.csv": {
+      "checksum": "777ab9a0ec9ce8f89a832ad311e9e8f4"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/extdata/ipcc_glossary.csv": {
+      "checksum": "62c51b571ab6a9f5fd1bf1b3c6097015"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/extdata/merged_glossary_cache.rds": {
+      "checksum": "d649e27a42977907f4890d274d42653e"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/help/aliases.rds": {
+      "checksum": "ad122223264ce989b82d1d52076f04ee"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/help/AnIndex": {
+      "checksum": "bf52ee2b897e849251814b3aa8225a2f"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/help/glossary.ipbes.ipcc.rdb": {
+      "checksum": "41239a0b448659d72f7cff08ba1da86d"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/help/glossary.ipbes.ipcc.rdx": {
+      "checksum": "b5deecc62b4cb0c51be5f4f76c938cd5"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/help/paths.rds": {
+      "checksum": "d2ece47762155f748d247345bc9f03b3"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/html/00Index.html": {
+      "checksum": "3d03387128d4c58bfe9c6c3035396f1b"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/html/R.css": {
+      "checksum": "8b9362669af13540a86a3ac6cf22f99d"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/INDEX": {
+      "checksum": "3ee9a8180595b3323f4f83236054335f"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/LICENSE": {
+      "checksum": "ff1d40ff5ae28bae33fd25b96ef0e861"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/features.rds": {
+      "checksum": "6e936bdf4dfd14911ddf370dc8063ab9"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/hsearch.rds": {
+      "checksum": "8dc3192a83a666e42b43cc5ae47fe2d9"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/links.rds": {
+      "checksum": "1b6b9b6ddfe873fe0c461a66bbaaeeb5"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/nsInfo.rds": {
+      "checksum": "7681f5c34cb829c81d5ddeb78cb6d234"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/package.rds": {
+      "checksum": "727e20190dc1b5994603c0e6137f2961"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/Rd.rds": {
+      "checksum": "70231b0137e7f76b3ba3da175bd0ca19"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/Meta/vignette.rds": {
+      "checksum": "d696e145e13f39810e094a6d5639fab0"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/NAMESPACE": {
+      "checksum": "9c084945e56804b4dae64cea7078c232"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/NEWS.md": {
+      "checksum": "06173b563a0ded820a654659da61536f"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc": {
+      "checksum": "d6c68f1fe41ced6e98a766a3757313da"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc.rdb": {
+      "checksum": "24e2a27f9749dc0f502fd4c94cef9071"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/R/glossary.ipbes.ipcc.rdx": {
+      "checksum": "a019a595f78c9a968e18258b05a55cdf"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/rmarkdown/graph_export_report.Rmd": {
+      "checksum": "cf046bf264cc85e88ef81aa216b85a81"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/scripts/scrape_ipcc_and_update_caches.R": {
+      "checksum": "3a645c2c2077612e058213080330c6e4"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/scripts/update_bundled_caches.R": {
+      "checksum": "bbd9efec456041ae20b7d360496063d1"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/www/background.html": {
+      "checksum": "4b5a04094342b2e059e159f604effe62"
+    },
+    "glossary.ipbes.ipcc.Rcheck/glossary.ipbes.ipcc/www/custom.css": {
+      "checksum": "6149ed5073131eea9d0326d453d99371"
     },
     "inst/extdata/hierarchy_edges_cache.rds": {
       "checksum": "5efd6ae7965992d38800b25022839f9b"
