@@ -19,3 +19,6 @@ glossary.ipbes.ipcc_*.tar.gz
 ._*
 .Spotlight-V100
 .Trashes
+
+/.quarto/
+**/*.quarto_ipynb

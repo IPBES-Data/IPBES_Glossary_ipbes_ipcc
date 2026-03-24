@@ -1,6 +1,8 @@
 # glossary.ipbes.ipcc
 
 <!-- badges: start -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19181890.svg)](https://doi.org/10.5281/zenodo.19181890)
+[![Open Shiny App](https://img.shields.io/badge/Connect%20Cloud-Open%20App-blue)](https://019d19d3-2a50-2200-2ed0-301b5602a6da.share.connect.posit.cloud)
 [![R CMD CHECK](https://github.com/rkrug/glossary_ipbes_ipcc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rkrug/glossary_ipbes_ipcc/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
