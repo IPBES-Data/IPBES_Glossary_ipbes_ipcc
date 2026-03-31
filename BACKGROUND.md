@@ -24,6 +24,9 @@ in-definition term navigation.
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
 - `inst/extdata/ipcc_glossary_multilingual.csv`
+- `inst/extdata/glossary_multilingual_parquet/`
+- `inst/extdata/glossary_multilingual_runtime.rds`
+- `inst/extdata/glossary_multilingual_unified.csv`
 - `inst/extdata/ipcc_report_names.csv`
 - `inst/extdata/merged_glossary_cache.rds`
 - `inst/extdata/hierarchy_edges_cache.rds`
@@ -39,6 +42,7 @@ The app also uses:
 
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/ipcc_glossary.csv`
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/ipcc_glossary_multilingual.csv`
+- `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/glossary_multilingual_runtime.rds`
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/startup_merged_cache.rds`
 
 `ipcc_glossary.csv` in the user cache is created/updated by the "Update IPCC
@@ -73,6 +77,18 @@ Multilingual matrix scraping extends this with:
    - one row per `(id, report, language)` for `en`, `ar`, `es`, `fr`, `ru`, `zh`
    - placeholder rows are persisted when translations are not available
    - columns include: `did`, `pid`, availability/fetch status, endpoint provenance.
+
+Unified multilingual master artifacts:
+
+- canonical parquet dataset: `inst/extdata/glossary_multilingual_parquet/`
+  - partitioning: `source=<IPBES|IPCC>/language=<...>/report_or_assessment=<...>`
+- runtime cache: `inst/extdata/glossary_multilingual_runtime.rds`
+- inspection export: `inst/extdata/glossary_multilingual_unified.csv`
+
+Current source coverage policy:
+
+- IPBES rows are currently `language = en` only (from bundled IPBES CSV source).
+- IPCC rows come from live multilingual scraping matrix.
 
 Politeness/rate-limiting:
 
@@ -374,6 +390,9 @@ This regenerates:
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
 - `inst/extdata/ipcc_glossary_multilingual.csv`
+- `inst/extdata/glossary_multilingual_parquet/`
+- `inst/extdata/glossary_multilingual_runtime.rds`
+- `inst/extdata/glossary_multilingual_unified.csv`
 - `inst/extdata/merged_glossary_cache.rds`
 - `inst/extdata/hierarchy_edges_cache.rds`
 

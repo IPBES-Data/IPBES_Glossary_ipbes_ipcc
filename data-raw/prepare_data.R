@@ -4,6 +4,9 @@
 #   1. inst/extdata/ipbes_glossary.csv  — cleaned IPBES source
 #   2. inst/extdata/ipcc_glossary.csv   — scraped IPCC snapshot
 #   3. inst/extdata/ipcc_glossary_multilingual.csv — multilingual IPCC matrix
+#   4. inst/extdata/glossary_multilingual_parquet/ — unified multilingual parquet
+#   5. inst/extdata/glossary_multilingual_runtime.rds — runtime multilingual cache
+#   6. inst/extdata/glossary_multilingual_unified.csv — inspection/back-compat export
 #
 # Run this script from the package root before building:
 #   source("data-raw/prepare_data.R")
@@ -25,6 +28,9 @@ ipbes_src   <- file.path(repo_root, "data-raw", "IPBES", "glossary_2026-02-23.cs
 ipbes_dest  <- file.path(repo_root, "inst", "extdata", "ipbes_glossary.csv")
 ipcc_dest   <- file.path(repo_root, "inst", "extdata", "ipcc_glossary.csv")
 ipcc_multi_dest <- file.path(repo_root, "inst", "extdata", "ipcc_glossary_multilingual.csv")
+unified_multi_parquet_dir <- file.path(repo_root, "inst", "extdata", "glossary_multilingual_parquet")
+unified_multi_runtime_rds <- file.path(repo_root, "inst", "extdata", "glossary_multilingual_runtime.rds")
+unified_multi_csv <- file.path(repo_root, "inst", "extdata", "glossary_multilingual_unified.csv")
 extdata_dir <- file.path(repo_root, "inst", "extdata")
 
 if (!dir.exists(extdata_dir)) dir.create(extdata_dir, recursive = TRUE)
@@ -66,7 +72,7 @@ cat("=== Part 2: IPCC glossary (scrape from web) ===\n")
 cat("This will take several minutes. Please be patient.\n\n")
 
 # Load required packages
-required_pkgs <- c("httr", "rvest", "dplyr")
+required_pkgs <- c("httr", "rvest", "dplyr", "arrow")
 missing_pkgs  <- required_pkgs[!sapply(required_pkgs, requireNamespace,
                                        quietly = TRUE)]
 if (length(missing_pkgs) > 0) {
@@ -209,6 +215,27 @@ if (!file.exists(ipcc_multi_dest)) {
   stop("Expected multilingual artifact not found: ", ipcc_multi_dest)
 }
 cat(sprintf("Saved multilingual IPCC matrix to %s\n", ipcc_multi_dest))
+
+# -- Step 5: build unified multilingual artifacts -----------------------------
+cat("\nStep 5: Building unified multilingual dataset (IPBES + IPCC)...\n")
+source(file.path(repo_root, "R", "utils.R"))
+source(file.path(repo_root, "R", "data_multilingual.R"))
+
+unified_multi <- build_unified_multilingual_dataset(
+  ipbes_path = ipbes_dest,
+  ipcc_multilingual_path = ipcc_multi_dest
+)
+
+write_unified_multilingual_artifacts(
+  unified_df = unified_multi,
+  parquet_dir = unified_multi_parquet_dir,
+  runtime_rds_path = unified_multi_runtime_rds,
+  unified_csv_path = unified_multi_csv
+)
+
+cat(sprintf("Saved unified parquet dataset to %s\n", unified_multi_parquet_dir))
+cat(sprintf("Saved runtime multilingual cache to %s\n", unified_multi_runtime_rds))
+cat(sprintf("Saved unified multilingual CSV export to %s\n", unified_multi_csv))
 
 # ============================================================
 # Part 3: Build bundled merged startup cache
