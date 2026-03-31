@@ -5,20 +5,24 @@
 #
 # Optional environment variables:
 #   SHINYAPPS_ACCOUNT     (default: rmkrug)
-#   SHINYAPPS_APP_NAME    (default: glossary-ipbes-ipcc-explorer)
+#   SHINYAPPS_APP_NAME    (explicit override target name)
+#   DEPLOY_BRANCH         (defaults to current git branch)
+#   DEPLOY_DRY_RUN        (1/true/yes to print target only)
 
 if (!requireNamespace("rsconnect", quietly = TRUE)) {
   stop("Package 'rsconnect' is required. Install with install.packages('rsconnect').")
 }
 
+source(file.path("scripts", "deploy_helpers.R"))
+
 account <- trimws(Sys.getenv("SHINYAPPS_ACCOUNT", "rmkrug"))
-app_name <- trimws(Sys.getenv("SHINYAPPS_APP_NAME", "glossary-ipbes-ipcc-explorer"))
+base_app_name <- "glossary-ipbes-ipcc-explorer"
+explicit_name <- trimws(Sys.getenv("SHINYAPPS_APP_NAME", ""))
+branch <- resolve_deploy_branch()
+app_name <- resolve_target_name(base_app_name, branch, explicit_name)
 
 if (!nzchar(account)) {
   stop("Missing shinyapps.io account. Set SHINYAPPS_ACCOUNT.")
-}
-if (!nzchar(app_name)) {
-  stop("Missing app name. Set SHINYAPPS_APP_NAME.")
 }
 
 required_cache_files <- c(
@@ -27,13 +31,14 @@ required_cache_files <- c(
   "inst/extdata/merged_glossary_cache.rds",
   "inst/extdata/hierarchy_edges_cache.rds"
 )
+ensure_required_cache_files(required_cache_files)
 
-missing_cache_files <- required_cache_files[!file.exists(required_cache_files)]
-if (length(missing_cache_files) > 0) {
-  stop(
-    "Missing bundled cache/snapshot files. Run data-raw/prepare_data.R first:\n",
-    paste0(" - ", missing_cache_files, collapse = "\n")
-  )
+print_deploy_target("shinyapps", branch, base_app_name, app_name, explicit_name)
+cat(sprintf("[shinyapps] account=%s\n", account))
+
+if (is_deploy_dry_run()) {
+  cat("[shinyapps] DEPLOY_DRY_RUN=1 -> skipping deploy call.\n")
+  quit(save = "no", status = 0)
 }
 
 rsconnect::deployApp(

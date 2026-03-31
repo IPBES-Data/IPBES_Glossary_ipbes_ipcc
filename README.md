@@ -64,6 +64,15 @@ see [BACKGROUND.md](BACKGROUND.md).
 
 ## Deploying to shinyapps.io
 
+All deploy helpers are branch-safe by default:
+
+- `main`, `master`, and `release*` deploy to the base production app name
+- non-production branches (for example `dev`) deploy to a suffixed name
+  (for example `glossary-ipbes-ipcc-dev`)
+- `SHINYAPPS_APP_NAME` is an explicit override
+- `DEPLOY_BRANCH` overrides detected git branch
+- `DEPLOY_DRY_RUN=1` prints target resolution without deploying
+
 Use the compare-app deploy helper:
 
 ```bash
@@ -83,6 +92,54 @@ Rscript scripts/deploy_shinyapps_glossary.R
 ```
 
 This deploys `app_glossary.R` as a separate shinyapps.io app.
+
+Example for `dev` branch target resolution without deploying:
+
+```bash
+DEPLOY_BRANCH=dev DEPLOY_DRY_RUN=1 \
+Rscript scripts/deploy_shinyapps_compare.R
+```
+
+## Deploying to Posit Connect / Connect Cloud
+
+New branch-safe deploy helpers:
+
+- `scripts/deploy_connect_compare.R` (deploys `app_compare.R`)
+- `scripts/deploy_connect_glossary.R` (deploys `app_glossary.R`)
+
+Required environment variables:
+
+- `CONNECT_SERVER`
+- `CONNECT_API_KEY`
+
+Optional environment variables:
+
+- `CONNECT_SERVER_NAME` (default: `posit-connect`)
+- `CONNECT_ACCOUNT` (auto-detected when omitted)
+- `CONNECT_CONTENT_NAME` (explicit target-name override)
+- `CONNECT_GUID` (existing content id/guid to update)
+- `CONNECT_PROD_GUID` / `CONNECT_PROD_GUIDS` (known production guid(s) for guard)
+- `DEPLOY_BRANCH` and `DEPLOY_DRY_RUN`
+- `ALLOW_PROD_OVERWRITE` (default `0`)
+
+Example for `dev` branch target resolution without deploying:
+
+```bash
+CONNECT_SERVER=https://<tenant>.share.connect.posit.cloud \
+CONNECT_API_KEY=... \
+DEPLOY_BRANCH=dev DEPLOY_DRY_RUN=1 \
+Rscript scripts/deploy_connect_glossary.R
+```
+
+### Production overwrite prevention
+
+If `CONNECT_GUID` is provided on a non-production branch and matches a known
+production GUID (`CONNECT_PROD_GUID` or `CONNECT_PROD_GUIDS`), deployment is
+blocked by default. Override intentionally with:
+
+```bash
+ALLOW_PROD_OVERWRITE=1
+```
 
 ## Data sources
 
