@@ -3,6 +3,7 @@
 # One-time developer script that populates inst/extdata/ with:
 #   1. inst/extdata/ipbes_glossary.csv  — cleaned IPBES source
 #   2. inst/extdata/ipcc_glossary.csv   — scraped IPCC snapshot
+#   3. inst/extdata/ipcc_glossary_multilingual.csv — multilingual IPCC matrix
 #
 # Run this script from the package root before building:
 #   source("data-raw/prepare_data.R")
@@ -23,6 +24,7 @@ cat("Package root:", repo_root, "\n\n")
 ipbes_src   <- file.path(repo_root, "data-raw", "IPBES", "glossary_2026-02-23.csv")
 ipbes_dest  <- file.path(repo_root, "inst", "extdata", "ipbes_glossary.csv")
 ipcc_dest   <- file.path(repo_root, "inst", "extdata", "ipcc_glossary.csv")
+ipcc_multi_dest <- file.path(repo_root, "inst", "extdata", "ipcc_glossary_multilingual.csv")
 extdata_dir <- file.path(repo_root, "inst", "extdata")
 
 if (!dir.exists(extdata_dir)) dir.create(extdata_dir, recursive = TRUE)
@@ -198,6 +200,15 @@ for (i in seq_len(nrow(term_stubs))) {
 glossary_df <- do.call(rbind, all_rows)
 write.csv(glossary_df, ipcc_dest, row.names = FALSE, fileEncoding = "UTF-8")
 cat(sprintf("\nSaved %d IPCC terms to %s\n", nrow(glossary_df), ipcc_dest))
+
+# -- Step 4: scrape multilingual matrix --------------------------------------
+cat("\nStep 4: Fetching multilingual IPCC matrix...\n")
+source(file.path(repo_root, "R", "data_ipcc.R"))
+scrape_ipcc_multilingual(cache_dir = extdata_dir)
+if (!file.exists(ipcc_multi_dest)) {
+  stop("Expected multilingual artifact not found: ", ipcc_multi_dest)
+}
+cat(sprintf("Saved multilingual IPCC matrix to %s\n", ipcc_multi_dest))
 
 # ============================================================
 # Part 3: Build bundled merged startup cache

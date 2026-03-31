@@ -28,6 +28,7 @@ if (!nzchar(account)) {
 required_cache_files <- c(
   "inst/extdata/ipbes_glossary.csv",
   "inst/extdata/ipcc_glossary.csv",
+  "inst/extdata/ipcc_glossary_multilingual.csv",
   "inst/extdata/merged_glossary_cache.rds",
   "inst/extdata/hierarchy_edges_cache.rds"
 )

@@ -23,6 +23,7 @@ in-definition term navigation.
 
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
+- `inst/extdata/ipcc_glossary_multilingual.csv`
 - `inst/extdata/ipcc_report_names.csv`
 - `inst/extdata/merged_glossary_cache.rds`
 - `inst/extdata/hierarchy_edges_cache.rds`
@@ -37,6 +38,7 @@ These are shipped with the package and available on first startup.
 The app also uses:
 
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/ipcc_glossary.csv`
+- `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/ipcc_glossary_multilingual.csv`
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/startup_merged_cache.rds`
 
 `ipcc_glossary.csv` in the user cache is created/updated by the "Update IPCC
@@ -56,6 +58,21 @@ The app and `data-raw/prepare_data.R` scrape the IPCC glossary via the
    - Reads reports from `data-report` attributes
 3. Save rows:
    - columns: `id`, `prefix`, `term`, `definition`, `reports`, `downloaded_at`
+
+Multilingual matrix scraping extends this with:
+
+1. ID seed union from:
+   - `https://apps.ipcc.ch/glossary/ajax/ajax.searchbyindex.php?q=<PREFIX>`
+   - `https://apps.ipcc.ch/glossary/ajax/ajax.searchbylatestindex.php?q=<PREFIX>`
+2. Per report-term detail:
+   - `https://apps.ipcc.ch/glossary/ajax/ajax.searchbyphraseandreport.php?q=<PHRASE_ID>&r=<REPORT>`
+   - reads translation metadata from `a.translation[data-lang][data-did][data-pid][data-report]`
+3. Translation payload fetch:
+   - `https://apps.ipcc.ch/glossary/ajax/ajax.gettranslation.php?q=<DID>&p=<PID>&r=<REPORT>&l=<LANG>`
+4. Matrix output:
+   - one row per `(id, report, language)` for `en`, `ar`, `es`, `fr`, `ru`, `zh`
+   - placeholder rows are persisted when translations are not available
+   - columns include: `did`, `pid`, availability/fetch status, endpoint provenance.
 
 Politeness/rate-limiting:
 
@@ -81,6 +98,8 @@ Term cleaning:
 - Ensures required columns exist.
 - Cleans definitions with `clean_html()`.
 - Expands semicolon-separated report list into one row per report for details.
+- `load_ipcc_multilingual()` provides read access to the multilingual matrix
+  artifact without changing current runtime merge/UI behavior.
 
 ## 5. Merging Logic
 
@@ -354,6 +373,7 @@ This regenerates:
 
 - `inst/extdata/ipbes_glossary.csv`
 - `inst/extdata/ipcc_glossary.csv`
+- `inst/extdata/ipcc_glossary_multilingual.csv`
 - `inst/extdata/merged_glossary_cache.rds`
 - `inst/extdata/hierarchy_edges_cache.rds`
 
