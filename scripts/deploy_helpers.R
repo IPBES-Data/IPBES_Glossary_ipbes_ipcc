@@ -96,3 +96,13 @@ is_deploy_dry_run <- function() {
 allow_prod_overwrite <- function() {
   .deploy_env_true("ALLOW_PROD_OVERWRITE", default = FALSE)
 }
+
+resolve_deploy_log_level <- function(default = "verbose") {
+  lvl <- tolower(trimws(Sys.getenv("DEPLOY_LOG_LEVEL", default)))
+  valid <- c("normal", "verbose", "quiet")
+  if (!lvl %in% valid) {
+    warning("Invalid DEPLOY_LOG_LEVEL='", lvl, "'. Falling back to '", default, "'.")
+    lvl <- default
+  }
+  lvl
+}

@@ -13,6 +13,7 @@
 #   CONNECT_PROD_GUIDS      (comma-separated known production guids)
 #   DEPLOY_BRANCH           (defaults to current git branch)
 #   DEPLOY_DRY_RUN          (1/true/yes to print target only)
+#   DEPLOY_LOG_LEVEL        (normal|verbose|quiet; default: verbose)
 #   ALLOW_PROD_OVERWRITE    (1/true/yes to override GUID guard)
 
 source(file.path("scripts", "deploy_helpers.R"))
@@ -21,6 +22,7 @@ base_name <- "glossary-ipbes-ipcc"
 branch <- resolve_deploy_branch()
 explicit_name <- trimws(Sys.getenv("CONNECT_CONTENT_NAME", ""))
 content_name <- resolve_target_name(base_name, branch, explicit_name)
+deploy_log_level <- resolve_deploy_log_level("verbose")
 
 connect_server <- trimws(Sys.getenv("CONNECT_SERVER", ""))
 connect_server_name <- trimws(Sys.getenv("CONNECT_SERVER_NAME", "posit-connect"))
@@ -56,6 +58,7 @@ ensure_required_cache_files(required_cache_files)
 print_deploy_target("connect", branch, base_name, content_name, explicit_name)
 cat(sprintf("[connect] server=%s\n", connect_server))
 cat(sprintf("[connect] server_name=%s\n", connect_server_name))
+cat(sprintf("[connect] log_level=%s\n", deploy_log_level))
 if (nzchar(connect_guid)) cat(sprintf("[connect] guid=%s\n", connect_guid))
 
 if (is_deploy_dry_run()) {
@@ -109,6 +112,7 @@ deploy_args <- list(
   appTitle = content_name,
   account = connect_account,
   server = connect_server_name,
+  logLevel = deploy_log_level,
   forceUpdate = TRUE
 )
 if (nzchar(connect_guid)) deploy_args$appId <- connect_guid
