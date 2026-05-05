@@ -19,10 +19,11 @@
 #' @export
 run_glossary <- function(
     cache_dir = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
+    port = 7654,
     ...
 ) {
   app <- .create_glossary_app(cache_dir = cache_dir)
-  shiny::runApp(app, ...)
+  shiny::runApp(app, port = port, ...)
 }
 
 .create_glossary_app <- function(cache_dir) {
@@ -40,10 +41,21 @@ run_glossary <- function(
   issues_url <- "https://github.com/rkrug/glossary_ipbes_ipcc/issues"
   about_url <- "custom/about_glossary.html"
   app_version <- .app_version_string()
+  desc_date <- tryCatch({
+    dcf <- read.dcf(system.file("DESCRIPTION", package = "glossary.ipbes.ipcc"))
+    if (nrow(dcf) > 0 && "Date" %in% colnames(dcf)) as.Date(trimws(dcf[1, "Date"])) else NA
+  }, error = function(e) NA)
+  if (is.na(desc_date)) {
+    p <- file.path(getwd(), "DESCRIPTION")
+    desc_date <- tryCatch({
+      dcf <- read.dcf(p)
+      if (nrow(dcf) > 0 && "Date" %in% colnames(dcf)) as.Date(trimws(dcf[1, "Date"])) else Sys.Date()
+    }, error = function(e) Sys.Date())
+  }
   app_date <- paste(
-    as.integer(format(Sys.Date(), "%d")),
-    format(Sys.Date(), "%B"),
-    format(Sys.Date(), "%Y")
+    as.integer(format(desc_date, "%d")),
+    format(desc_date, "%B"),
+    format(desc_date, "%Y")
   )
 
   shiny::fluidPage(
@@ -328,11 +340,10 @@ run_glossary <- function(
   terms <- terms[nzchar(terms)]
   if (length(terms) == 0) return(character(0))
 
-  # De-duplicate case-insensitively so variants like "Biodiversity" and
-  # "biodiversity" appear only once in the selector.
-  key <- tolower(terms)
-  terms <- terms[!duplicated(key)]
-  terms[order(tolower(terms), terms)]
+  # Lowercase all terms, then de-duplicate.
+  terms <- tolower(terms)
+  terms <- terms[!duplicated(terms)]
+  sort(terms)
 }
 
 .glossary_find_row <- function(data, term, mode = "both") {

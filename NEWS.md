@@ -1,3 +1,20 @@
+# glossary.ipbes.ipcc 1.1.0
+
+## New data
+
+* Added BBA (Business and biodiversity assessment) glossary entries to the
+  bundled IPBES data (`inst/extdata/ipbes_glossary.csv`), bringing the total
+  to ~2,301 rows.
+
+## Bug fixes
+
+* `load_ipbes()`: concept names are now lowercased on load, so BBA entries
+  (e.g. `"Bioeconomy"`) are correctly merged with matching entries from other
+  assessments rather than appearing as separate terms.
+* Glossary explorer term selector: all terms are now displayed in lowercase,
+  eliminating mixed-case duplicates (e.g. `"Biodiversity hotspots"` /
+  `"biodiversity hotspots"`).
+
 # glossary.ipbes.ipcc 1.0.0
 
 ## Improvements
