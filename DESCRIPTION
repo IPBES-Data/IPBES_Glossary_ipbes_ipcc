@@ -37,6 +37,7 @@ Imports:
 Suggests:
     shinyjs (>= 2.1.0),
     shinyWidgets (>= 0.8.0),
+    arrow,
     diffobj (>= 0.3.5),
     testthat (>= 3.0.0),
     knitr,

@@ -3,6 +3,7 @@
 export(compute_text_similarity)
 export(load_ipbes)
 export(load_ipcc)
+export(load_ipcc_multilingual)
 export(merge_glossaries)
 export(render_text_diff)
 export(run_app)

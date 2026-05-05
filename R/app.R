@@ -163,7 +163,14 @@ run_app <- function(
   if (!nzchar(www_path)) stop("Could not locate inst/www assets.")
 
   existing <- shiny::resourcePaths()
-  if (!("custom" %in% names(existing))) {
+  if ("custom" %in% names(existing)) {
+    existing_path <- normalizePath(existing[["custom"]], winslash = "/", mustWork = FALSE)
+    target_path <- normalizePath(www_path, winslash = "/", mustWork = FALSE)
+    if (!identical(existing_path, target_path)) {
+      shiny::removeResourcePath("custom")
+      shiny::addResourcePath("custom", www_path)
+    }
+  } else {
     shiny::addResourcePath("custom", www_path)
   }
   invisible(www_path)
