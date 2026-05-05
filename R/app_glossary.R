@@ -45,7 +45,7 @@ run_glossary <- function(
 .build_glossary_ui <- function() {
   issues_url <- "https://github.com/rkrug/glossary_ipbes_ipcc/issues"
   about_url <- "custom/about_glossary.html"
-  app_version <- "1.9 beta"
+  app_version <- .package_version_safe()
   css_href <- paste0("custom/custom.css?v=", as.integer(Sys.time()))
   app_date <- paste(
     as.integer(format(Sys.Date(), "%d")),
