@@ -302,8 +302,8 @@ run_glossary <- function(
       dict <- dict_r()
       hover_keys <- c(
         selected_key,
-        if (!is.na(family$ipbes_concept_id) && nzchar(family$ipbes_concept_id)) paste0("IPBES::", family$ipbes_concept_id) else character(0),
-        if (!is.na(family$ipcc_concept_id) && nzchar(family$ipcc_concept_id)) paste0("IPCC::", family$ipcc_concept_id) else character(0)
+        if (length(family$ipbes_concept_ids) > 0) paste0("IPBES::", family$ipbes_concept_ids) else character(0),
+        if (length(family$ipcc_concept_ids) > 0) paste0("IPCC::", family$ipcc_concept_ids) else character(0)
       )
       hover_lookup <- .glossary_hover_lookup_subset(
         multilingual = multilingual_r(),
@@ -312,7 +312,7 @@ run_glossary <- function(
       ipbes_section <- .glossary_multilingual_source_section_ui(
         multilingual = multilingual_r(),
         source = "IPBES",
-        concept_id = family$ipbes_concept_id,
+        concept_ids = family$ipbes_concept_ids,
         languages = languages_r(),
         dict = dict,
         hover_lookup = hover_lookup,
@@ -321,7 +321,7 @@ run_glossary <- function(
       ipcc_section <- .glossary_multilingual_source_section_ui(
         multilingual = multilingual_r(),
         source = "IPCC",
-        concept_id = family$ipcc_concept_id,
+        concept_ids = family$ipcc_concept_ids,
         languages = languages_r(),
         dict = dict,
         hover_lookup = hover_lookup,
@@ -535,32 +535,51 @@ run_glossary <- function(
 }
 
 .glossary_selected_family <- function(selected_key, catalog, multilingual, main_language, mode = "both") {
-  out <- list(ipbes_concept_id = NA_character_, ipcc_concept_id = NA_character_)
+  out <- list(ipbes_concept_ids = character(0), ipcc_concept_ids = character(0))
   if (!nzchar(selected_key)) return(out)
   row <- .glossary_catalog_row(catalog, selected_key)
   if (is.null(row) || nrow(row) == 0) return(out)
 
   src <- row$source[[1]]
   cid <- row$concept_id[[1]]
-  if (src == "IPBES") out$ipbes_concept_id <- cid
-  if (src == "IPCC") out$ipcc_concept_id <- cid
-
-  if (!identical(mode, "both")) return(out)
+  if (src == "IPBES") out$ipbes_concept_ids <- cid
+  if (src == "IPCC") out$ipcc_concept_ids <- cid
 
   en_key <- row$english_key[[1]]
-  if (!nzchar(en_key) || is.null(catalog) || nrow(catalog) == 0) return(out)
+  if (!nzchar(en_key)) return(out)
 
-  ipbes_idx <- which(catalog$source == "IPBES" & catalog$english_key == en_key)
-  ipcc_idx <- which(catalog$source == "IPCC" & catalog$english_key == en_key)
-  if (length(ipbes_idx) > 0) out$ipbes_concept_id <- as.character(catalog$concept_id[[ipbes_idx[[1]]]])
-  if (length(ipcc_idx) > 0) out$ipcc_concept_id <- as.character(catalog$concept_id[[ipcc_idx[[1]]]])
+  if (is.null(multilingual) || nrow(multilingual) == 0) return(out)
+  ml <- multilingual
+  ml$source <- toupper(trimws(as.character(ml$source)))
+  ml$language <- tolower(trimws(as.character(ml$language)))
+  ml$term <- trimws(as.character(ml$term))
+  ml$is_available <- as.logical(ml$is_available)
+  ml_en <- ml[
+    ml$language == "en" &
+      !is.na(ml$is_available) &
+      ml$is_available &
+      !is.na(ml$term) &
+      nzchar(ml$term),
+    ,
+    drop = FALSE
+  ]
+  if (nrow(ml_en) == 0) return(out)
+  ml_en$key <- normalise_term(ml_en$term)
+
+  ipbes_ids <- unique(trimws(as.character(ml_en$concept_id[ml_en$source == "IPBES" & ml_en$key == en_key])))
+  ipcc_ids <- unique(trimws(as.character(ml_en$concept_id[ml_en$source == "IPCC" & ml_en$key == en_key])))
+  ipbes_ids <- ipbes_ids[!is.na(ipbes_ids) & nzchar(ipbes_ids)]
+  ipcc_ids <- ipcc_ids[!is.na(ipcc_ids) & nzchar(ipcc_ids)]
+
+  if (length(ipbes_ids) > 0) out$ipbes_concept_ids <- ipbes_ids
+  if (length(ipcc_ids) > 0) out$ipcc_concept_ids <- ipcc_ids
   out
 }
 
 .glossary_multilingual_source_section_ui <- function(
     multilingual,
     source,
-    concept_id,
+    concept_ids,
     languages,
     dict,
     hover_lookup,
@@ -576,11 +595,14 @@ run_glossary <- function(
     htmltools::h4(.glossary_section_header_title("Term", source_title)),
     htmltools::div(class = "glossary-empty", "No definitions available.")
   )
-  if (!nzchar(concept_id) || is.na(concept_id)) return(list(ui = empty_ui, data = NULL))
+  concept_ids <- as.character(concept_ids)
+  concept_ids <- unique(trimws(concept_ids))
+  concept_ids <- concept_ids[!is.na(concept_ids) & nzchar(concept_ids)]
+  if (length(concept_ids) == 0) return(list(ui = empty_ui, data = NULL))
 
   df <- multilingual[
     toupper(trimws(as.character(multilingual$source))) == source &
-      trimws(as.character(multilingual$concept_id)) == trimws(as.character(concept_id)),
+      trimws(as.character(multilingual$concept_id)) %in% concept_ids,
     ,
     drop = FALSE
   ]
