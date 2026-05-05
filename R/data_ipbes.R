@@ -60,6 +60,10 @@ load_ipbes <- function(
   if (!"acronym"    %in% names(raw)) raw$acronym    <- NA_character_
   if (!"alt_labels" %in% names(raw)) raw$alt_labels <- NA_character_
 
+  # Normalise concept to lowercase so BBA ("Bioeconomy") and other assessments
+  # ("bioeconomy") are grouped together by summarise_ipbes()
+  raw$concept <- tolower(raw$concept)
+
   # Clean HTML entities from definition
   raw$definition <- clean_html(raw$definition)
 
