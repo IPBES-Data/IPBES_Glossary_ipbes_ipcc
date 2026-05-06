@@ -97,7 +97,8 @@ run_app <- function(
 }
 
 # Load merged glossary data with cache-first startup behavior.
-.load_merged_data <- function(cache_dir, prepare_table_cache = TRUE) {
+.load_merged_data <- function(cache_dir, prepare_table_cache = TRUE,
+                              prepare_highlight_cache = FALSE) {
   .ensure_cache_dir(cache_dir)
 
   bundled_ipcc <- .pkg_file("extdata", "ipcc_glossary.csv")
@@ -143,6 +144,11 @@ run_app <- function(
   if (isTRUE(prepare_table_cache) && !.has_current_table_view_cache(merged)) {
     message("Preparing table view cache...")
     merged <- .prepare_table_data(merged)
+    .save_startup_merged_cache(cache_dir, cache_meta, merged)
+  }
+
+  if (isTRUE(prepare_highlight_cache) && !.has_current_highlight_cache(merged)) {
+    merged <- .prepare_glossary_highlight_data(merged)
     .save_startup_merged_cache(cache_dir, cache_meta, merged)
   }
 
