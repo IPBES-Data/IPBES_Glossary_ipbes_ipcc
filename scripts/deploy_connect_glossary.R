@@ -106,8 +106,8 @@ if (!nzchar(connect_account)) {
 cat(sprintf("[connect] account=%s\n", connect_account))
 
 deploy_args <- list(
-  appDir = ".",
-  appPrimaryDoc = "app_glossary.R",
+  appDir = "glossary",
+  appPrimaryDoc = "app.R",
   appName = content_name,
   appTitle = content_name,
   account = connect_account,

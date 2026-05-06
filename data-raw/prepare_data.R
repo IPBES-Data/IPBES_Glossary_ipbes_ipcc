@@ -286,4 +286,51 @@ saveRDS(hier_cache, hier_cache_path)
 cat(sprintf("Saved hierarchy cache (%d edges) to %s\n",
             nrow(hier_edges), hier_cache_path))
 
-cat("\n=== Done. Commit inst/extdata/ to git. ===\n")
+# ============================================================
+# Part 4: Sync caches to standalone app subdirectories
+# ============================================================
+cat("\n=== Part 4: Sync caches to app subdirectories ===\n")
+
+sync_files <- c(
+  "ipbes_glossary.csv",
+  "ipcc_glossary.csv",
+  "merged_glossary_cache.rds",
+  "hierarchy_edges_cache.rds"
+)
+
+compare_extdata <- file.path(repo_root, "compare", "inst", "extdata")
+glossary_extdata <- file.path(repo_root, "glossary", "inst", "extdata")
+
+for (dir in c(compare_extdata, glossary_extdata)) {
+  if (!dir.exists(dir)) {
+    cat(sprintf("Skipping %s (directory does not exist)\n", dir))
+    next
+  }
+  for (f in sync_files) {
+    src <- file.path(extdata_dir, f)
+    dst <- file.path(dir, f)
+    if (file.exists(src)) {
+      file.copy(src, dst, overwrite = TRUE)
+      cat(sprintf("  Synced %s -> %s\n", f, dir))
+    }
+  }
+}
+
+# Glossary also needs multilingual files
+multi_files <- c(
+  "glossary_multilingual_runtime.rds",
+  "glossary_multilingual_unified.csv",
+  "ipcc_glossary_multilingual.csv"
+)
+if (dir.exists(glossary_extdata)) {
+  for (f in multi_files) {
+    src <- file.path(extdata_dir, f)
+    dst <- file.path(glossary_extdata, f)
+    if (file.exists(src)) {
+      file.copy(src, dst, overwrite = TRUE)
+      cat(sprintf("  Synced %s -> glossary/inst/extdata/\n", f))
+    }
+  }
+}
+
+cat("\n=== Done. Commit inst/extdata/, compare/inst/extdata/, and glossary/inst/extdata/ to git. ===\n")

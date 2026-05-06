@@ -49,8 +49,8 @@ if (is_deploy_dry_run()) {
 }
 
 rsconnect::deployApp(
-  appDir        = ".",
-  appPrimaryDoc = "app_compare.R",
+  appDir        = "compare",
+  appPrimaryDoc = "app.R",
   appName       = app_name,
   account       = account,
   logLevel      = deploy_log_level,
