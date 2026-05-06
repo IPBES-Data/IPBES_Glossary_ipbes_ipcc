@@ -191,12 +191,7 @@ write_unified_multilingual_artifacts <- function(
 }
 
 load_unified_multilingual_runtime <- function(
-    path = {
-      p <- system.file("extdata", "glossary_multilingual_runtime.rds",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "glossary_multilingual_runtime.rds")
-    }
+    path = file.path(getwd(), "inst", "extdata", "glossary_multilingual_runtime.rds")
 ) {
   if (!nzchar(path) || !file.exists(path)) return(NULL)
   obj <- readRDS(path)

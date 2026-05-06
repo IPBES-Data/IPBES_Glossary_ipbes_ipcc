@@ -20,12 +20,7 @@
 #'   }
 #' @export
 load_ipbes <- function(
-    path = {
-      p <- system.file("extdata", "ipbes_glossary.csv",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "ipbes_glossary.csv")
-    }
+    path = file.path(getwd(), "inst", "extdata", "ipbes_glossary.csv")
 ) {
   if (!nzchar(path) || !file.exists(path)) {
     stop("IPBES glossary CSV not found at: ", path)

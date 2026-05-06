@@ -310,11 +310,9 @@ run_app <- function(
     if (file.exists(source_path) || dir.exists(source_path)) return(source_path)
   }
 
-  pkg_path <- system.file(..., package = "glossary.ipbes.ipcc")
-  if (nzchar(pkg_path)) return(pkg_path)
-
   local_path <- file.path(getwd(), "inst", ...)
   if (file.exists(local_path) || dir.exists(local_path)) return(local_path)
+
   ""
 }
 

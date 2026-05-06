@@ -5,12 +5,7 @@
 # Resolve active IPCC source path (cache first, then bundled snapshot)
 resolve_ipcc_source_path <- function(
     cache_dir    = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
-    bundled_path = {
-      p <- system.file("extdata", "ipcc_glossary.csv",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "ipcc_glossary.csv")
-    }
+    bundled_path = file.path(getwd(), "inst", "extdata", "ipcc_glossary.csv")
 ) {
   cache_file <- file.path(cache_dir, "ipcc_glossary.csv")
 
@@ -29,12 +24,7 @@ resolve_ipcc_source_path <- function(
 # Resolve active multilingual IPCC source path (cache first, then bundled snapshot)
 resolve_ipcc_multilingual_source_path <- function(
     cache_dir    = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
-    bundled_path = {
-      p <- system.file("extdata", "ipcc_glossary_multilingual.csv",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "ipcc_glossary_multilingual.csv")
-    }
+    bundled_path = file.path(getwd(), "inst", "extdata", "ipcc_glossary_multilingual.csv")
 ) {
   cache_file <- file.path(cache_dir, "ipcc_glossary_multilingual.csv")
 
@@ -64,12 +54,7 @@ resolve_ipcc_multilingual_source_path <- function(
 #' @export
 load_ipcc <- function(
     cache_dir    = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
-    bundled_path = {
-      p <- system.file("extdata", "ipcc_glossary.csv",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "ipcc_glossary.csv")
-    }
+    bundled_path = file.path(getwd(), "inst", "extdata", "ipcc_glossary.csv")
 ) {
   path <- resolve_ipcc_source_path(cache_dir, bundled_path)
   if (!nzchar(path)) {
@@ -118,12 +103,7 @@ load_ipcc <- function(
 #' @export
 load_ipcc_multilingual <- function(
     cache_dir    = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
-    bundled_path = {
-      p <- system.file("extdata", "ipcc_glossary_multilingual.csv",
-                       package = "glossary.ipbes.ipcc")
-      if (nzchar(p)) p else file.path(getwd(), "inst", "extdata",
-                                      "ipcc_glossary_multilingual.csv")
-    }
+    bundled_path = file.path(getwd(), "inst", "extdata", "ipcc_glossary_multilingual.csv")
 ) {
   path <- resolve_ipcc_multilingual_source_path(cache_dir, bundled_path)
   if (!nzchar(path)) {
