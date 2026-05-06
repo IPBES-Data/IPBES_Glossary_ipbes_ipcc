@@ -19,10 +19,11 @@
 #' @export
 run_glossary <- function(
     cache_dir = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
+    port = 7654,
     ...
 ) {
   app <- .create_glossary_app(cache_dir = cache_dir)
-  shiny::runApp(app, ...)
+  shiny::runApp(app, port = port, ...)
 }
 
 .create_glossary_app <- function(cache_dir) {
@@ -168,6 +169,8 @@ run_glossary <- function(
     about_url <- "custom/about_glossary.html"
     merged_rv <- shiny::reactiveVal(initial_data)
     active_term_rv <- shiny::reactiveVal(NULL)
+    # Per-session UI cache: key = "term_key|mode|language", value = rendered htmltools UI.
+    .ui_cache <- new.env(hash = TRUE, parent = emptyenv())
 
     shiny::observeEvent(input$about_open, {
       about_src <- paste0(about_url, "?t=", as.integer(Sys.time()))
@@ -295,6 +298,11 @@ run_glossary <- function(
 
       mode <- mode_r()
       main_language <- main_language_r()
+      cache_key <- paste(selected_key, mode, main_language, sep = "|")
+      if (exists(cache_key, envir = .ui_cache, inherits = FALSE)) {
+        return(.ui_cache[[cache_key]])
+      }
+
       family <- selected_family_r()
       selected_catalog <- .glossary_catalog_row(catalog_r(), selected_key)
       if (is.null(selected_catalog) || nrow(selected_catalog) == 0) return(NULL)
@@ -347,10 +355,12 @@ run_glossary <- function(
         list(ipbes_section$ui, ipcc_section$ui, see_also_ui)
       }
 
-      do.call(htmltools::div, c(list(
+      ui <- do.call(htmltools::div, c(list(
         class = "glossary-sections",
         `data-selected-term` = selected_catalog$label[[1]]
       ), sections))
+      .ui_cache[[cache_key]] <- ui
+      ui
     })
   }
 }
@@ -753,7 +763,10 @@ run_glossary <- function(
   escaped <- vapply(map$term, .glossary_escape_regex, character(1), USE.NAMES = FALSE)
   escaped <- gsub("\\s+", "\\\\s+", escaped)
   patterns <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
-  list(terms = map$term, patterns = patterns, targets = map$target)
+  first_words <- tolower(vapply(map$term, function(t) {
+    strsplit(trimws(t), "\\s+")[[1]][1]
+  }, character(1), USE.NAMES = FALSE))
+  list(terms = map$term, patterns = patterns, targets = map$target, first_words = first_words)
 }
 
 .glossary_hover_lookup_from_catalog <- function(multilingual, catalog, mode = "both") {
@@ -801,7 +814,12 @@ run_glossary <- function(
   occupied <- rep(FALSE, n)
   found <- list()
 
-  for (i in seq_along(dict$terms)) {
+  txt_words <- if (!is.null(dict$first_words)) {
+    unique(regmatches(tolower(txt), gregexpr("[[:alnum:]]+", tolower(txt), perl = TRUE))[[1]])
+  } else NULL
+  candidate_idx <- if (!is.null(txt_words)) which(dict$first_words %in% txt_words) else seq_along(dict$terms)
+
+  for (i in candidate_idx) {
     term <- dict$terms[[i]]
     pattern <- dict$patterns[[i]]
     target <- dict$targets[[i]]
@@ -1409,10 +1427,14 @@ run_glossary <- function(
   escaped <- vapply(terms, .glossary_escape_regex, character(1), USE.NAMES = FALSE)
   escaped <- gsub("\\s+", "\\\\s+", escaped)
   patterns <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
+  first_words <- tolower(vapply(terms, function(t) {
+    strsplit(trimws(t), "\\s+")[[1]][1]
+  }, character(1), USE.NAMES = FALSE))
 
   list(
-    terms = terms,
-    patterns = patterns
+    terms       = terms,
+    patterns    = patterns,
+    first_words = first_words
   )
 }
 
@@ -1430,7 +1452,12 @@ run_glossary <- function(
   occupied <- rep(FALSE, n)
   found <- list()
 
-  for (i in seq_along(dict$terms)) {
+  txt_words <- if (!is.null(dict$first_words)) {
+    unique(regmatches(tolower(txt), gregexpr("[[:alnum:]]+", tolower(txt), perl = TRUE))[[1]])
+  } else NULL
+  candidate_idx <- if (!is.null(txt_words)) which(dict$first_words %in% txt_words) else seq_along(dict$terms)
+
+  for (i in candidate_idx) {
     term <- dict$terms[[i]]
     pattern <- dict$patterns[[i]]
     mm <- gregexpr(pattern, txt, perl = TRUE, ignore.case = TRUE)[[1]]
