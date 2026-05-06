@@ -1,9 +1,11 @@
 # scripts/write_manifests.R
-# Regenerate manifest.json in compare/ and glossary/ for Posit Connect
+# Regenerate manifest.json in compare/ and/or glossary/ for Posit Connect
 # git-backed deployment.
 #
 # Run from the repo root:
-#   Rscript scripts/write_manifests.R
+#   Rscript scripts/write_manifests.R              # both apps
+#   Rscript scripts/write_manifests.R glossary     # glossary only
+#   Rscript scripts/write_manifests.R compare      # compare only
 #
 # rsconnect requires the renv library to be on the search path so it can
 # verify packages match the lockfile.  This script locates the per-app renv
@@ -39,5 +41,7 @@ write_manifest <- function(app_dir) {
   cat(sprintf("Written: %s/manifest.json\n", app_dir))
 }
 
-write_manifest("glossary")
-write_manifest("compare")
+args     <- commandArgs(trailingOnly = TRUE)
+app_dirs <- if (length(args) > 0) args else c("glossary", "compare")
+
+for (d in app_dirs) write_manifest(d)

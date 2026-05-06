@@ -1,61 +1,45 @@
 #!/usr/bin/env Rscript
 
 # Scrape the live IPCC glossary into inst/extdata/ipcc_glossary.csv, then
-# rebuild bundled caches.
+# rebuild all bundled caches.
 #
-# Usage:
+# Run from the repo root:
 #   Rscript inst/scripts/scrape_ipcc_and_update_caches.R
-
-find_package_root <- function(start = getwd()) {
-  dir <- normalizePath(start, winslash = "/", mustWork = FALSE)
-  repeat {
-    desc <- file.path(dir, "DESCRIPTION")
-    if (file.exists(desc)) {
-      dcf <- tryCatch(read.dcf(desc), error = function(e) NULL)
-      if (!is.null(dcf) && "Package" %in% colnames(dcf)) {
-        pkg <- unname(trimws(dcf[1, "Package"]))
-        if (identical(pkg, "glossary.ipbes.ipcc")) return(dir)
-      }
-    }
-    parent <- dirname(dir)
-    if (identical(parent, dir)) break
-    dir <- parent
-  }
-  stop("Could not find package root (DESCRIPTION for glossary.ipbes.ipcc).")
-}
 
 `%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
 
-script_path <- {
+find_repo_root <- function() {
   full_args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- grep("^--file=", full_args, value = TRUE)
+  file_arg  <- grep("^--file=", full_args, value = TRUE)
   if (length(file_arg) > 0) {
-    normalizePath(sub("^--file=", "", file_arg[[1]]), winslash = "/", mustWork = FALSE)
-  } else {
-    ""
+    script_dir <- normalizePath(
+      dirname(sub("^--file=", "", file_arg[[1]])),
+      winslash = "/", mustWork = FALSE
+    )
+    root <- dirname(dirname(script_dir))
+    if (dir.exists(file.path(root, "inst", "extdata"))) return(root)
   }
+  wd <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
+  if (dir.exists(file.path(wd, "inst", "extdata"))) return(wd)
+  stop("Cannot locate repo root. Run from the repo root or via Rscript inst/scripts/scrape_ipcc_and_update_caches.R")
 }
 
-repo_root <- tryCatch(
-  find_package_root(getwd()),
-  error = function(e) {
-    if (!nzchar(script_path)) stop(e$message)
-    find_package_root(dirname(script_path))
-  }
-)
-
+repo_root   <- find_repo_root()
 extdata_dir <- file.path(repo_root, "inst", "extdata")
-ipcc_dest <- file.path(extdata_dir, "ipcc_glossary.csv")
+ipcc_dest   <- file.path(extdata_dir, "ipcc_glossary.csv")
+r_dir       <- file.path(repo_root, "glossary", "R")
+
 cache_update_script <- file.path(repo_root, "inst", "scripts", "update_bundled_caches.R")
 
-if (!dir.exists(extdata_dir)) stop("Missing extdata directory: ", extdata_dir)
+if (!dir.exists(extdata_dir))       stop("Missing extdata directory: ", extdata_dir)
 if (!file.exists(cache_update_script)) stop("Missing script: ", cache_update_script)
 
-cat("Package root:", repo_root, "\n")
+cat("Repo root:", repo_root, "\n")
 cat("Scraping IPCC glossary from live endpoint...\n")
 
-source(file.path(repo_root, "R", "app.R"))
-source(file.path(repo_root, "R", "data_ipcc.R"))
+for (f in c("utils.R", "data_ipcc.R", "ipcc_report_names.R")) {
+  source(file.path(r_dir, f))
+}
 
 tmp_dir <- tempfile("ipcc_scrape_")
 dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
@@ -66,20 +50,14 @@ if (!file.exists(scraped_path)) {
 }
 
 ok <- file.copy(scraped_path, ipcc_dest, overwrite = TRUE)
-if (!isTRUE(ok)) {
-  stop("Failed to copy scraped file to: ", ipcc_dest)
-}
+if (!isTRUE(ok)) stop("Failed to copy scraped file to: ", ipcc_dest)
 cat("Updated:", ipcc_dest, "\n")
 
 cat("Rebuilding bundled caches...\n")
-rscript <- file.path(R.home("bin"), "Rscript")
-cmd_out <- system2(
-  command = rscript,
-  args = c(cache_update_script, "--force"),
-  stdout = TRUE,
-  stderr = TRUE
-)
-status <- attr(cmd_out, "status") %||% 0L
+rscript  <- file.path(R.home("bin"), "Rscript")
+cmd_out  <- system2(rscript, args = c(cache_update_script, "--force"),
+                    stdout = TRUE, stderr = TRUE)
+status   <- attr(cmd_out, "status") %||% 0L
 
 if (length(cmd_out) > 0) cat(paste(cmd_out, collapse = "\n"), "\n")
 if (!identical(as.integer(status), 0L)) {
