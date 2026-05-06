@@ -210,9 +210,11 @@ source(file.path(repo_root, "R", "data_ipbes.R"))
 source(file.path(repo_root, "R", "data_ipcc.R"))
 source(file.path(repo_root, "R", "similarity_text.R"))
 source(file.path(repo_root, "R", "data_merge.R"))
+source(file.path(repo_root, "R", "ipcc_report_names.R"))
 source(file.path(repo_root, "R", "mod_table.R"))
 source(file.path(repo_root, "R", "hierarchy_terms.R"))
 source(file.path(repo_root, "R", "mod_graph.R"))
+source(file.path(repo_root, "R", "app_glossary.R"))
 
 ipbes_long <- load_ipbes(path = ipbes_dest)
 ipbes_sum  <- summarise_ipbes(ipbes_long)
@@ -220,6 +222,7 @@ ipcc_raw   <- load_ipcc(cache_dir = tempdir(), bundled_path = ipcc_dest)
 ipcc_sum   <- summarise_ipcc(ipcc_raw)
 merged     <- merge_glossaries(ipbes_sum, ipcc_sum)
 merged     <- .prepare_table_data(merged)
+merged     <- .prepare_glossary_highlight_data(merged)
 
 cache_meta <- list(
   schema    = 1L,
@@ -229,7 +232,7 @@ cache_meta <- list(
 
 merged_cache_path <- file.path(extdata_dir, "merged_glossary_cache.rds")
 saveRDS(list(meta = cache_meta, merged = merged), merged_cache_path)
-cat(sprintf("Saved startup cache (%d rows) to %s\n",
+cat(sprintf("Saved startup cache (%d rows, with highlight cache) to %s\n",
             nrow(merged), merged_cache_path))
 
 # Build bundled hierarchy edge cache so graph is available immediately.

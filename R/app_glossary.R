@@ -1,5 +1,6 @@
 # Glossary explorer app entry point
 # =============================================================================
+.HIGHLIGHT_CACHE_VERSION <- 1L
 
 #' Run the interactive glossary explorer app
 #'
@@ -28,7 +29,9 @@ run_glossary <- function(
 
 .create_glossary_app <- function(cache_dir) {
   .ensure_cache_dir(cache_dir)
-  merged <- .load_merged_data(cache_dir, prepare_table_cache = FALSE)
+  merged <- .load_merged_data(cache_dir,
+                              prepare_table_cache    = FALSE,
+                              prepare_highlight_cache = TRUE)
   .register_www_assets()
 
   shiny::shinyApp(
@@ -160,6 +163,10 @@ run_glossary <- function(
     about_url <- "custom/about_glossary.html"
     merged_rv <- shiny::reactiveVal(initial_data)
     active_term_rv <- shiny::reactiveVal(NULL)
+    # Per-session cache: key = "term|mode", value = rendered htmltools UI.
+    # dict and hover_lookup are fixed for the session, so the HTML for a given
+    # term+mode is always identical and safe to cache indefinitely.
+    .ui_cache <- new.env(hash = TRUE, parent = emptyenv())
 
     shiny::observeEvent(input$about_open, {
       about_src <- paste0(about_url, "?t=", as.integer(Sys.time()))
@@ -260,62 +267,77 @@ run_glossary <- function(
         return(NULL)
       }
 
+      term <- selected_term_r()
       mode <- mode_r()
-      dict <- dict_r()
-      hover_lookup <- hover_lookup_r()
-      see_also_terms <- .glossary_collect_link_terms(row, mode, dict)
+      cache_key <- paste(term, mode, sep = "|")
+
+      if (exists(cache_key, envir = .ui_cache, inherits = FALSE)) {
+        return(.ui_cache[[cache_key]])
+      }
+
+      # Only compute dict/hover_lookup when pre-computed HTML is unavailable.
+      # With the highlight cache present these are never needed, so skipping
+      # them avoids ~3300-pattern regex compilation on first term selection.
+      has_precomputed <- .has_current_highlight_cache(merged_rv())
+      dict         <- if (has_precomputed) NULL else dict_r()
+      hover_lookup <- if (has_precomputed) NULL else hover_lookup_r()
+
+      see_also_terms <- if (has_precomputed && "see_also_list" %in% names(row) &&
+                            length(row$see_also_list) > 0 &&
+                            !is.null(row$see_also_list[[1]])) {
+        row$see_also_list[[1]]
+      } else {
+        .glossary_collect_link_terms(row, mode, dict)
+      }
       see_also_ui <- .glossary_see_also_ui(see_also_terms, mode)
 
-      if (identical(mode, "ipbes")) {
-        return(
-          htmltools::div(
-            class = "glossary-sections",
-            .glossary_source_section_ui(
-              row = row,
-              source = "ipbes",
-              dict = dict,
-              hover_lookup = hover_lookup,
-              term_label = selected_term_r()
-            ),
-            see_also_ui
-          )
+      ui <- if (identical(mode, "ipbes")) {
+        htmltools::div(
+          class = "glossary-sections",
+          .glossary_source_section_ui(
+            row = row,
+            source = "ipbes",
+            dict = dict,
+            hover_lookup = hover_lookup,
+            term_label = term
+          ),
+          see_also_ui
+        )
+      } else if (identical(mode, "ipcc")) {
+        htmltools::div(
+          class = "glossary-sections",
+          .glossary_source_section_ui(
+            row = row,
+            source = "ipcc",
+            dict = dict,
+            hover_lookup = hover_lookup,
+            term_label = term
+          ),
+          see_also_ui
+        )
+      } else {
+        htmltools::div(
+          class = "glossary-sections",
+          .glossary_source_section_ui(
+            row = row,
+            source = "ipbes",
+            dict = dict,
+            hover_lookup = hover_lookup,
+            term_label = term
+          ),
+          .glossary_source_section_ui(
+            row = row,
+            source = "ipcc",
+            dict = dict,
+            hover_lookup = hover_lookup,
+            term_label = term
+          ),
+          see_also_ui
         )
       }
 
-      if (identical(mode, "ipcc")) {
-        return(
-          htmltools::div(
-            class = "glossary-sections",
-            .glossary_source_section_ui(
-              row = row,
-              source = "ipcc",
-              dict = dict,
-              hover_lookup = hover_lookup,
-              term_label = selected_term_r()
-            ),
-            see_also_ui
-          )
-        )
-      }
-
-      htmltools::div(
-        class = "glossary-sections",
-        .glossary_source_section_ui(
-          row = row,
-          source = "ipbes",
-          dict = dict,
-          hover_lookup = hover_lookup,
-          term_label = selected_term_r()
-        ),
-        .glossary_source_section_ui(
-          row = row,
-          source = "ipcc",
-          dict = dict,
-          hover_lookup = hover_lookup,
-          term_label = selected_term_r()
-        ),
-        see_also_ui
-      )
+      .ui_cache[[cache_key]] <- ui
+      ui
     })
   }
 }
@@ -501,7 +523,13 @@ run_glossary <- function(
     src <- as.character(grouped[[source_col]][i])
     src <- .glossary_source_inline(src)
     def <- as.character(grouped$definition[i])
-    def_html <- .glossary_highlight_definition(def, dict, hover_lookup)
+    def_html <- if ("definition_html" %in% names(grouped) &&
+                    !is.na(grouped$definition_html[[i]]) &&
+                    nzchar(grouped$definition_html[[i]])) {
+      grouped$definition_html[[i]]
+    } else {
+      .glossary_highlight_definition(def, dict, hover_lookup)
+    }
 
     htmltools::div(
       class = "glossary-def-card",
@@ -749,6 +777,50 @@ run_glossary <- function(
   paste(lines, collapse = "\n")
 }
 
+.has_current_highlight_cache <- function(data) {
+  if (is.null(data) || nrow(data) == 0) return(TRUE)
+  if (!"highlight_cache_version" %in% names(data)) return(FALSE)
+  all(!is.na(data$highlight_cache_version)) &&
+    all(as.integer(data$highlight_cache_version) == .HIGHLIGHT_CACHE_VERSION)
+}
+
+.prepare_glossary_highlight_data <- function(data) {
+  if (.has_current_highlight_cache(data)) return(data)
+
+  message("Pre-computing definition highlights…")
+  all_terms <- .glossary_term_catalog(data, "both")
+  dict      <- .glossary_highlight_dictionary(all_terms)
+  hover     <- .glossary_hover_lookup(data, "both")
+
+  for (i in seq_len(nrow(data))) {
+    ipbes_df <- data$ipbes_data[[i]]
+    if (!is.null(ipbes_df) && nrow(ipbes_df) > 0 && "definition" %in% names(ipbes_df)) {
+      ipbes_df$definition_html <- vapply(
+        ipbes_df$definition,
+        .glossary_highlight_definition, character(1),
+        dict = dict, hover_lookup = hover
+      )
+      data$ipbes_data[[i]] <- ipbes_df
+    }
+
+    ipcc_df <- data$ipcc_data[[i]]
+    if (!is.null(ipcc_df) && nrow(ipcc_df) > 0 && "definition" %in% names(ipcc_df)) {
+      ipcc_df$definition_html <- vapply(
+        ipcc_df$definition,
+        .glossary_highlight_definition, character(1),
+        dict = dict, hover_lookup = hover
+      )
+      data$ipcc_data[[i]] <- ipcc_df
+    }
+
+    row <- data[i, , drop = FALSE]
+    data$see_also_list[[i]] <- .glossary_collect_link_terms(row, "both", dict)
+  }
+
+  data$highlight_cache_version <- .HIGHLIGHT_CACHE_VERSION
+  data
+}
+
 .glossary_highlight_dictionary <- function(terms) {
   terms <- as.character(terms)
   terms <- terms[!is.na(terms)]
@@ -765,9 +837,14 @@ run_glossary <- function(
   escaped <- gsub("\\s+", "\\\\s+", escaped)
   patterns <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
 
+  first_words <- tolower(vapply(terms, function(t) {
+    strsplit(trimws(t), "\\s+")[[1]][1]
+  }, character(1), USE.NAMES = FALSE))
+
   list(
-    terms = terms,
-    patterns = patterns
+    terms       = terms,
+    patterns    = patterns,
+    first_words = first_words
   )
 }
 
@@ -785,7 +862,17 @@ run_glossary <- function(
   occupied <- rep(FALSE, n)
   found <- list()
 
-  for (i in seq_along(dict$terms)) {
+  txt_words <- if (!is.null(dict$first_words)) {
+    unique(regmatches(tolower(txt),
+                      gregexpr("[[:alnum:]]+", tolower(txt), perl = TRUE))[[1]])
+  } else NULL
+  candidate_idx <- if (!is.null(txt_words)) {
+    which(dict$first_words %in% txt_words)
+  } else {
+    seq_along(dict$terms)
+  }
+
+  for (i in candidate_idx) {
     term <- dict$terms[[i]]
     pattern <- dict$patterns[[i]]
     mm <- gregexpr(pattern, txt, perl = TRUE, ignore.case = TRUE)[[1]]
@@ -798,11 +885,7 @@ run_glossary <- function(
       if (start < 1L || end < start || end > n) next
       if (any(occupied[start:end])) next
       occupied[start:end] <- TRUE
-      found[[length(found) + 1L]] <- list(
-        start = start,
-        end = end,
-        term = term
-      )
+      found[[length(found) + 1L]] <- list(start = start, end = end, term = term)
     }
   }
 
