@@ -664,9 +664,12 @@ run_glossary <- function(
 }
 
 .glossary_group_definitions <- function(detail_df, source_col) {
+  has_html <- "definition_html" %in% names(detail_df)
+
   .empty_grouped <- function() {
     out <- data.frame(character(0), character(0), stringsAsFactors = FALSE)
     names(out) <- c(source_col, "definition")
+    if (has_html) out$definition_html <- character(0)
     out
   }
 
@@ -681,16 +684,19 @@ run_glossary <- function(
   detail_df <- detail_df[keep, , drop = FALSE]
   defs <- trimws(as.character(detail_df$definition))
   src <- if (source_col %in% names(detail_df)) trimws(as.character(detail_df[[source_col]])) else rep("", length(defs))
+  html_vals <- if (has_html) as.character(detail_df$definition_html) else rep(NA_character_, length(defs))
 
   rows <- list()
   for (i in seq_along(defs)) {
-    def_i <- defs[[i]]
-    src_i <- src[[i]]
+    def_i  <- defs[[i]]
+    src_i  <- src[[i]]
+    html_i <- html_vals[[i]]
     idx <- match(def_i, vapply(rows, function(x) x$definition, character(1)))
     if (is.na(idx)) {
       rows[[length(rows) + 1]] <- list(
-        definition = def_i,
-        sources = if (!is.na(src_i) && nzchar(src_i)) src_i else character(0)
+        definition      = def_i,
+        definition_html = html_i,
+        sources         = if (!is.na(src_i) && nzchar(src_i)) src_i else character(0)
       )
     } else if (!is.na(src_i) && nzchar(src_i) && !src_i %in% rows[[idx]]$sources) {
       rows[[idx]]$sources <- c(rows[[idx]]$sources, src_i)
@@ -698,11 +704,14 @@ run_glossary <- function(
   }
 
   out <- data.frame(
-    sources = vapply(rows, function(x) paste(x$sources, collapse = "\n"), character(1)),
-    definition = vapply(rows, function(x) x$definition, character(1)),
+    sources         = vapply(rows, function(x) paste(x$sources, collapse = "\n"), character(1)),
+    definition      = vapply(rows, function(x) x$definition, character(1)),
     stringsAsFactors = FALSE
   )
   names(out)[1] <- source_col
+  if (has_html) {
+    out$definition_html <- vapply(rows, function(x) if (!is.null(x$definition_html)) x$definition_html else NA_character_, character(1))
+  }
   out
 }
 
