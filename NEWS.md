@@ -1,4 +1,4 @@
-# glossary.ipbes.ipcc 2.0.0
+# glossary.ipbes.ipcc 1.2.0
 
 ## Breaking changes
 
