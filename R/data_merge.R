@@ -25,9 +25,6 @@
 #'     \item{ipcc_summary_def}{IPCC summary definition, or `NA`.}
 #'     \item{ipbes_data}{List-column: per-assessment tibble from IPBES.}
 #'     \item{ipcc_data}{List-column: per-report tibble from IPCC.}
-#'     \item{sim_within_ipbes}{Mean pairwise similarity among IPBES definitions.}
-#'     \item{sim_within_ipcc}{Mean pairwise similarity among IPCC definitions.}
-#'     \item{sim_between_all}{Mean cross-similarity across all IPBES x IPCC definitions.}
 #'   }
 #' @export
 merge_glossaries <- function(ipbes_summary, ipcc_summary) {
@@ -109,9 +106,6 @@ merge_glossaries <- function(ipbes_summary, ipcc_summary) {
       ipcc_n_reports     = r$ipcc_n_reports,
       ipbes_summary_def  = r$ipbes_summary_def,
       ipcc_summary_def   = r$ipcc_summary_def,
-      sim_within_ipbes   = NA_real_,
-      sim_within_ipcc    = NA_real_,
-      sim_between_all    = NA_real_,
       stringsAsFactors   = FALSE
     )
   }))
@@ -119,14 +113,6 @@ merge_glossaries <- function(ipbes_summary, ipcc_summary) {
   # Attach list-columns
   out$ipbes_data <- lapply(merged_rows, `[[`, "ipbes_data")
   out$ipcc_data  <- lapply(merged_rows, `[[`, "ipcc_data")
-
-  # Compute similarity metrics from all available definitions
-  metrics <- lapply(seq_len(nrow(out)), function(i) {
-    compute_similarity_triplet(out$ipbes_data[[i]], out$ipcc_data[[i]])
-  })
-  out$sim_within_ipbes <- vapply(metrics, `[[`, numeric(1), "within_ipbes")
-  out$sim_within_ipcc  <- vapply(metrics, `[[`, numeric(1), "within_ipcc")
-  out$sim_between_all  <- vapply(metrics, `[[`, numeric(1), "between_all")
 
   # Sort alphabetically by default
   out <- out[order(out$matched_term, na.last = TRUE), ]

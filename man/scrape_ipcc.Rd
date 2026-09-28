@@ -4,19 +4,21 @@
 \alias{scrape_ipcc}
 \title{Scrape the IPCC glossary from the live website}
 \usage{
-scrape_ipcc(cache_dir, progress_callback = NULL)
+scrape_ipcc(cache_dir, progress_callback = NULL, pause = 0.3)
 }
 \arguments{
 \item{cache_dir}{Directory to write \code{ipcc_glossary.csv}.}
 
 \item{progress_callback}{Optional function \verb{function(current, total, term)}
 called after each term is fetched.  Use to drive a Shiny progress bar.}
+
+\item{pause}{Seconds to wait between requests.}
 }
 \value{
 Invisible path to the written CSV.
 }
 \description{
-Adapted from \code{data-raw/IPCC/download_ipcc_glossary.R}.  Downloads all terms
-and definitions from \url{https://apps.ipcc.ch/glossary/} and saves the result
-to \code{cache_dir}.
+Downloads every term from \url{https://apps.ipcc.ch/glossary/} at (term, report)
+granularity, then fills in cross-references for the report entries that have
+no definition of their own.
 }

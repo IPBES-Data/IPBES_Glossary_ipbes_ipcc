@@ -1,3 +1,125 @@
+# glossary.ipbes.ipcc 2.0.0
+
+## Breaking changes
+
+* This branch now carries the **glossary explorer only**. The comparison app
+  and everything that existed solely to support it have been removed:
+  `run_app()`, `render_text_diff()`, `compute_text_similarity()`,
+  `compute_term_hierarchy()` and the `tokenise_text()` / `STOPWORDS` /
+  `truncate_text()` / `similarity_bar_html()` helpers are gone, along with
+  `R/ui.R`, `R/server.R`, `R/mod_graph.R`, `R/mod_table.R`,
+  `R/mod_update_ipcc.R`, `R/diff_text.R`, `R/hierarchy_terms.R` and
+  `R/similarity_text.R`.
+* `merge_glossaries()` no longer computes the `sim_within_ipbes`,
+  `sim_within_ipcc` and `sim_between_all` columns; they were only ever read by
+  the comparison app, and dropping them removes the O(n^2) pairwise cosine pass
+  from a cold merge.
+* `inst/extdata/hierarchy_edges_cache.rds` and the graph export template are no
+  longer shipped. `reactable` and `visNetwork` are no longer dependencies.
+
+## Bug fixes
+
+* **Non-ASCII characters were silently corrupted in both bundled snapshots.**
+  A bare `Rscript` typically runs in the `C` locale, where R cannot represent
+  non-ASCII text in the native encoding and `write.csv()` replaces each
+  character with a literal `<U+XXXX>` escape. `clean_html()` then stripped that
+  escape as if it were an HTML tag, so `1.5°C pathway` became
+  `1.5C pathway` and `range of observed values` reached the app as
+  `rangeof observed values`. This affected 239 rows of the previous IPCC
+  snapshot and 237 rows of the IPBES snapshot (degree signs, en-dashes, curly
+  quotes, and transliterated Sanskrit such as `ahimsā`); the original
+  IPBES export was clean, so the corruption was introduced by the build.
+  - Both snapshots are regenerated in a UTF-8 locale and are now clean.
+  - `.ensure_utf8_locale()` is called by `scrape_ipcc()` and by the
+    cache-building scripts, and **errors** rather than letting a build write
+    mangled data.
+  - `clean_html()` normalises `U+00A0` to an ordinary space before stripping
+    tags. PCRE's `\s` does not match `U+00A0`, so a non-breaking space inside a
+    term also broke whole-word matching.
+  - A new test asserts the bundled snapshots contain no `<U+XXXX>` escapes.
+
+* **IPCC definitions were misattributed across reports.** The IPCC glossary is a
+  per-(term, report) structure and a term is frequently worded differently in
+  each report, but the scraper kept only the first report's definition and
+  `summarise_ipcc()` repeated it across every report in the list. 804 of 1,532
+  terms (52%) appear in more than one report, covering 2,652 (term, report)
+  pairs; in a sample of 8 multi-report terms all 8 differed, with `Likelihood`
+  carrying 8 distinct definitions across its 9 reports. The bundled snapshot is
+  now one row per (term, report), and each report shows its own wording. The
+  per-report text was always present in the bulk response, so this costs no
+  extra requests.
+* **Related-term pointers are captured and displayed.** IPCC entries carry
+  `See` (redirect), `See Also` (supplementary) and `Sub-terms` (narrower terms)
+  pointers, all previously discarded. 129 terms rendered as dead ends purely
+  because they are redirects. Pointers are now stored in `xref_kind`,
+  `xref_target` and `xref_target_id`, and shown in their own block inside each
+  definition card, visually separated from the definition and with their targets
+  linked. They do **not** feed the `See also` panel, which remains a derived,
+  cross-source list of terms occurring in definition text.
+  - The kind is read from the markup, not inferred from a blank definition: an
+    entry may have a definition, pointers, both, or neither. 35% of defined
+    (term, report) pairs carry pointers -- `Extreme climate event` in AR6 has a
+    730-character definition *and* a `See` redirect.
+  - Pointers vary per report, so definition cards are grouped on definition
+    **and** pointers; two reports sharing a definition but pointing elsewhere
+    stay separate entries.
+  - A card with pointers but no definition is labelled "Listed in:" rather than
+    "As defined in:".
+
+* In-definition term linking: terms whose first word contains a non-alphanumeric
+  character (`agro-ecological zone`, `(model) ensemble`, `asia-pacific region`,
+  ...) were never highlighted. The candidate prefilter compared a
+  whitespace-split first word against the definition's alphanumeric tokens, so
+  those patterns were filtered out before matching. Roughly 300 of the ~3,000
+  catalog terms were affected; 337 IPCC definitions gain links as a result.
+  `.HIGHLIGHT_CACHE_VERSION` is bumped to `2L` so existing caches rebuild.
+* `.prepare_glossary_highlight_data()` no longer warns once per row about an
+  uninitialised `see_also_list` column.
+
+## Data
+
+* The bundled IPCC snapshot is re-scraped as of 2026-09-15: 3,377 (term, report)
+  rows covering 1,530 terms, of which 3,142 carry a definition and 210 a
+  cross-reference. 570 of 758 multi-report terms (75%) turned out to word the
+  definition differently per report -- text that the previous snapshot collapsed
+  to a single wording.
+* `Indigenous peoples` (previously attributed to AR5-WG2, AR5-WG3 and AR6) has
+  been withdrawn from the IPCC glossary upstream and is therefore no longer in
+  the app. The website and the IPBES CSV are the authoritative sources, so
+  upstream removals propagate.
+* The cache rebuild scripts validate a new snapshot before adopting it and fail
+  if more than 1% of previously present terms disappear, so a parsing regression
+  is caught rather than silently committed.
+
+## Other changes
+
+* `.HIGHLIGHT_CACHE_VERSION` is bumped to `3L`: the pre-rendered definition HTML
+  no longer contains pointer text, and a new `xref_html` field is pre-rendered
+  alongside it.
+* `load_ipcc()` gains `report`, `xref_kind`, `xref_target` and `xref_target_id`
+  columns and drops the semicolon-separated `reports` column. Snapshots in the
+  old format are still read: their report list is expanded, repeating the single
+  stored definition, so an existing user cache keeps working.
+* The IPCC scraper existed in two copies that had to be kept in step;
+  `data-raw/prepare_data.R` now calls `scrape_ipcc()` instead of duplicating it.
+  HTML parsing is factored into `.ipcc_parse_occurrences()` and
+  `.ipcc_parse_cross_reference()`.
+
+## Testing
+
+* Added a `testthat` suite (`tests/testthat/`) covering the data pipeline, term
+  catalog and lookup, definition highlighting and in-definition linking, hover
+  previews, see-also derivation, the startup and highlight caches, and the app's
+  server logic end to end via `shiny::testServer()`, and the two IPCC HTML
+  parsers against fixture markup.
+
+## Documentation
+
+* `README.md`, `CLAUDE.md`, `BACKGROUND.md` and the background vignette rewritten
+  for the explorer-only package, and now document the two caching traps (a stale
+  `ipcc_glossary.csv` in the user cache dir bypassing the packaged cache, and
+  `.HIGHLIGHT_CACHE_VERSION`) and the uncaptured IPCC cross-reference entries.
+
 # glossary.ipbes.ipcc 1.1.0
 
 ## New data

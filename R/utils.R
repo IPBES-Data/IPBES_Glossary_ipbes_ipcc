@@ -6,17 +6,6 @@
 #' A character vector of ~60 common English stopwords used when tokenising
 #' definition text for similarity computation.
 #'
-#' @keywords internal
-STOPWORDS <- c(
-  "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-  "of", "with", "by", "from", "as", "is", "are", "was", "were", "be",
-  "been", "being", "have", "has", "had", "do", "does", "did", "will",
-  "would", "shall", "should", "may", "might", "can", "could", "that",
-  "this", "these", "those", "it", "its", "not", "no", "nor", "so",
-  "yet", "both", "either", "whether", "into", "through", "during",
-  "between", "such", "more", "also", "which", "what", "when", "where",
-  "how", "all", "any", "each", "their", "they", "them", "than", "other"
-)
 
 # =============================================================================
 
@@ -27,6 +16,10 @@ STOPWORDS <- c(
 #' @keywords internal
 clean_html <- function(text) {
   if (is.null(text) || all(is.na(text))) return(text)
+  # Non-breaking spaces are common in the source glossaries. Normalise them to
+  # ordinary spaces: PCRE's \\s does not match U+00A0, so leaving them in place
+  # breaks whole-word term matching and makes "range\u00a0of" unsearchable.
+  text <- gsub("\u00a0", " ", text, useBytes = FALSE)
   text <- gsub("<[^>]+>", "", text)        # strip tags
   text <- gsub("&amp;",  "&",  text)
   text <- gsub("&lt;",   "<",  text)
@@ -72,81 +65,56 @@ strip_qualifier <- function(term) {
 
 # =============================================================================
 
-#' Truncate text for table display
-#'
-#' @param text  Character vector.
-#' @param n     Maximum number of characters (default 200).
-#' @param ellipsis Suffix appended when truncated (default `"..."`).
-#' @return Character vector.
-#' @keywords internal
-truncate_text <- function(text, n = 200, ellipsis = "\u2026") {
-  ifelse(
-    is.na(text) | nchar(text) <= n,
-    text,
-    paste0(substr(text, 1, n), ellipsis)
-  )
-}
-
 # =============================================================================
 
-#' Build a coloured similarity bar HTML snippet
+#' Require a UTF-8 capable locale
 #'
-#' @param score Numeric 0-1 (or NA).
-#' @return HTML string.
+#' The glossaries contain degree signs, en-dashes, curly quotes and
+#' transliterated Sanskrit. In a non-UTF-8 locale (for example `C`, which is
+#' what a bare `Rscript` often gets), R cannot represent those characters in the
+#' native encoding and [utils::write.csv()] silently replaces each one with a
+#' literal `<U+XXXX>` escape -- so `1.5°C pathway` is written out as
+#' `1.5<U+00B0>C pathway` and stays that way in the app.
+#'
+#' This is called by the scraping and cache-building entry points, which write
+#' the bundled snapshots. It attempts to switch to a UTF-8 locale and errors if
+#' none is available, rather than letting a build corrupt the data.
+#'
+#' @param candidates Locale names to try, in order.
+#' @return Invisibly, the active `LC_CTYPE` locale.
 #' @keywords internal
-similarity_bar_html <- function(score) {
-  if (is.na(score)) {
-    return(htmltools::span(
-      style = "color: #aaa; font-size: 0.8rem;",
-      "\u2014"   # em dash
-    ) |> as.character())
+.ensure_utf8_locale <- function(candidates = c("en_US.UTF-8", "C.UTF-8",
+                                               "en_GB.UTF-8", "UTF-8")) {
+  if (isTRUE(l10n_info()$`UTF-8`)) return(invisible(Sys.getlocale("LC_CTYPE")))
+
+  for (loc in candidates) {
+    ok <- tryCatch({
+      suppressWarnings(Sys.setlocale("LC_CTYPE", loc))
+      isTRUE(l10n_info()$`UTF-8`)
+    }, error = function(e) FALSE)
+    if (isTRUE(ok)) return(invisible(Sys.getlocale("LC_CTYPE")))
   }
-  pct <- round(score * 100, 1)
-  # The bar is a coloured gradient; a grey overlay covers the "empty" portion
-  right_pct <- 100 - pct
-  htmltools::div(
-    class = "sim-bar-wrap",
-    htmltools::div(
-      class = "sim-bar",
-      htmltools::div(
-        class = "sim-bar-fill",
-        style = paste0("width:", right_pct, "%")
-      )
-    ),
-    htmltools::span(class = "sim-label", paste0(pct, "%"))
-  ) |> as.character()
-}
 
-# =============================================================================
-
-#' Build a three-line similarity HTML snippet
-#'
-#' @param sim_within_ipbes Numeric 0-1 or `NA`.
-#' @param sim_within_ipcc Numeric 0-1 or `NA`.
-#' @param sim_between_all Numeric 0-1 or `NA`.
-#' @return HTML string.
-#' @keywords internal
-similarity_triplet_html <- function(
-    sim_within_ipbes,
-    sim_within_ipcc,
-    sim_between_all
-) {
-  rows <- c(
-    .similarity_metric_row_html("Within IPBES", sim_within_ipbes),
-    .similarity_metric_row_html("Within IPCC", sim_within_ipcc),
-    .similarity_metric_row_html("Between All Definitions", sim_between_all)
+  stop(
+    "A UTF-8 locale is required to write the glossary snapshots without ",
+    "corrupting non-ASCII characters, but none of these could be set: ",
+    paste(candidates, collapse = ", "), ". Current LC_CTYPE is '",
+    Sys.getlocale("LC_CTYPE"), "'. Re-run with, for example, ",
+    "LC_ALL=en_US.UTF-8.",
+    call. = FALSE
   )
-
-  htmltools::div(
-    class = "sim-stack",
-    htmltools::HTML(paste(rows, collapse = ""))
-  ) |> as.character()
 }
 
-.similarity_metric_row_html <- function(label, score) {
-  htmltools::div(
-    class = "sim-metric-row",
-    htmltools::span(class = "sim-metric-label", label),
-    htmltools::HTML(similarity_bar_html(score))
-  ) |> as.character()
+#' Detect mangled non-ASCII escapes in character data
+#'
+#' Returns the indices of elements containing a literal `<U+XXXX>` sequence,
+#' the signature of a UTF-8 string written out through a non-UTF-8 locale.
+#'
+#' @param x Character vector.
+#' @return Integer vector of offending indices.
+#' @keywords internal
+.find_mangled_encoding <- function(x) {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  which(grepl("<U\\+[0-9A-Fa-f]{4,6}>", x))
 }

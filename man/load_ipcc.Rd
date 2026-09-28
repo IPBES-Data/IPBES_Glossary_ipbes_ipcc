@@ -18,16 +18,23 @@ load_ipcc(
 }
 \arguments{
 \item{cache_dir}{Directory where the user-updated IPCC CSV may be stored.
-Defaults to \code{\link[tools:userdir]{tools::R_user_dir()}} cache.}
+Defaults to \code{\link[tools:R_user_dir]{tools::R_user_dir()}} cache.}
 
 \item{bundled_path}{Path to the bundled IPCC CSV.}
 }
 \value{
-A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns \code{id}, \code{term}, \code{definition},
-\code{reports} (character, semicolons between report names), \code{downloaded_at}.
-Returns an empty tibble with the correct columns if no data is available.
+A \code{\link[tibble:tibble]{tibble::tibble()}} with columns \code{id}, \code{term}, \code{report},
+\code{definition}, \code{xref_kind}, \code{xref_target}, \code{xref_target_id} and
+\code{downloaded_at}. Returns an empty tibble with the correct columns if no
+data is available.
 }
 \description{
 Looks for a user-updated CSV in \code{cache_dir} first; falls back to the bundled
 snapshot in \verb{inst/extdata/}.
+}
+\details{
+The current snapshot format has one row per (term, report) pair. CSVs in the
+older one-row-per-term format (with a semicolon-separated \code{reports} column)
+are still readable: their report list is expanded, with the single stored
+definition repeated across reports.
 }

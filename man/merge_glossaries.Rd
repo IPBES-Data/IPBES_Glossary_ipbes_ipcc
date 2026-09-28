@@ -12,7 +12,7 @@ merge_glossaries(ipbes_summary, ipcc_summary)
 \item{ipcc_summary}{Output of \code{\link[=summarise_ipcc]{summarise_ipcc()}}.}
 }
 \value{
-A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns:
+A \code{\link[dplyr:tibble]{dplyr::tibble()}} with columns:
 \describe{
 \item{matched_term}{Best display name for the term.}
 \item{ipbes_concept}{Original IPBES concept string, or \code{NA}.}
@@ -23,9 +23,6 @@ A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns:
 \item{ipcc_summary_def}{IPCC summary definition, or \code{NA}.}
 \item{ipbes_data}{List-column: per-assessment tibble from IPBES.}
 \item{ipcc_data}{List-column: per-report tibble from IPCC.}
-\item{sim_within_ipbes}{Mean pairwise similarity among IPBES definitions.}
-\item{sim_within_ipcc}{Mean pairwise similarity among IPCC definitions.}
-\item{sim_between_all}{Mean cross-similarity across all IPBES x IPCC definitions.}
 }
 }
 \description{

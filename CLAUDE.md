@@ -4,33 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`glossary.ipbes.ipcc` is an R package providing two Shiny web applications:
-- **Comparison app** (`run_app()`): side-by-side glossary comparison with similarity scores, word-level diffs, and a directed hierarchy graph
-- **Glossary explorer** (`run_glossary()`): term browser with source filtering, autocomplete, and in-definition term navigation
+`glossary.ipbes.ipcc` provides one Shiny web application:
+
+- **Glossary explorer** (`run_glossary()`): term browser with source filtering
+  (IPBES / IPCC / Both), autocomplete, definitions grouped per assessment or
+  report, and in-definition term navigation.
+
+> This branch carries the explorer only. The former comparison app (`run_app()`)
+> and its supporting code -- similarity scoring, word-level diffs, the reactable
+> comparison table, and the directed term hierarchy graph -- have been removed.
 
 ## Common Commands
 
 ```r
-# Run apps locally
-glossary.ipbes.ipcc::run_app()
+# Run the app locally
 glossary.ipbes.ipcc::run_glossary()
 
-# Build and check
-devtools::build()
-devtools::check()
-
-# Regenerate bundled IPCC data (takes several minutes, scrapes apps.ipcc.ch)
-source("data-raw/prepare_data.R")
-
-# Run tests
+# Tests
 devtools::test()
 testthat::test_file("tests/testthat/test-<name>.R")
+
+# Build and check
+devtools::document()
+devtools::check()
+
+# Regenerate bundled IPCC data (several minutes, scrapes apps.ipcc.ch)
+source("data-raw/prepare_data.R")
 ```
 
 ```bash
+# Rebuild bundled caches only (no scrape, ~2.5 min)
+Rscript inst/scripts/update_bundled_caches.R --force
+
+# Scrape IPCC then rebuild caches
+Rscript inst/scripts/scrape_ipcc_and_update_caches.R
+
 # Deploy to shinyapps.io
-Rscript scripts/deploy_shinyapps_compare.R   # comparison app
-Rscript scripts/deploy_shinyapps_glossary.R  # glossary explorer
+Rscript scripts/deploy_shinyapps_glossary.R
 ```
 
 ## Architecture
@@ -47,46 +57,96 @@ inst/extdata/ipcc_glossary.csv   ──┤
                          merge_glossaries()            [R/data_merge.R]
                          (2-pass: exact match + qualifier-stripped)
                                    ↓
-                         compute_similarity_triplet()  [R/similarity_text.R]
-                         compute_term_hierarchy()      [R/hierarchy_terms.R]
+                         .prepare_glossary_highlight_data()
+                         (pre-renders definition_html + see_also_list)
                                    ↓
                          Triple-tier cache:
-                           1. packaged (inst/extdata/*.rds)
-                           2. user startup (~/.Rdata/glossary.../*.rds)
+                           1. packaged (inst/extdata/merged_glossary_cache.rds)
+                           2. user startup (R_user_dir cache)
                            3. full rebuild
                                    ↓
-                         Shiny apps (UI + server modules)
+                         Glossary explorer Shiny app
 ```
 
 ### Key Modules
 
 | File | Role |
 |------|------|
-| `R/app.R` | Entry points, caching orchestration, runtime detection |
-| `R/app_glossary.R` | Glossary explorer Shiny app (UI + server) |
+| `R/app.R` | Shared helpers: caching orchestration, package paths, version |
+| `R/app_glossary.R` | The app: UI, server, term lookup, highlighting, see-also |
+| `R/data_ipbes.R` | IPBES load + summarise |
+| `R/data_ipcc.R` | IPCC load + summarise + `scrape_ipcc()` and its HTML parsers |
 | `R/data_merge.R` | Full outer join with two-pass term matching |
-| `R/similarity_text.R` | TF-based cosine similarity (base R, no API needed) |
-| `R/hierarchy_terms.R` | Directed subsumption scores for hierarchy graph |
-| `R/diff_text.R` | LCS word-level diff for definition comparisons |
-| `R/mod_table.R` | Comparison table with expandable rows (reactable) |
-| `R/mod_graph.R` | Interactive hierarchy graph |
-| `R/utils.R` | HTML cleaning, term normalization helpers |
+| `R/ipcc_report_names.R` | Report abbreviation to long-name expansion |
+| `R/utils.R` | HTML cleaning, term normalisation helpers |
 
 ### Caching
 
-User cache lives in `tools::R_user_dir("glossary.ipbes.ipcc", "cache")`. Load order: packaged `.rds` → user startup cache (if source signatures match) → full rebuild. The "Update IPCC" live-update button is enabled locally but disabled on shinyapps.io by default; override with env var `GLOSSARY_ENABLE_LIVE_UPDATE=0|1`.
+User cache lives in `tools::R_user_dir("glossary.ipbes.ipcc", "cache")`. Load
+order: packaged `.rds` → user startup cache (if source signatures match) → full
+rebuild.
 
-### Data Sources
+Two traps worth remembering:
 
-- **IPBES**: Bundled CSV snapshot (`inst/extdata/ipbes_glossary.csv`, ~2,228 terms from 2026-02-23)
-- **IPCC**: Scraped from `apps.ipcc.ch` AJAX endpoints via `data-raw/prepare_data.R`; result committed to `inst/extdata/ipcc_glossary.csv`
+- A leftover `ipcc_glossary.csv` in the user cache dir makes the app prefer it
+  over the bundled snapshot, which **bypasses the packaged cache entirely** and
+  forces a multi-minute rebuild on every launch.
+- `.HIGHLIGHT_CACHE_VERSION` in `R/app_glossary.R` must be bumped whenever the
+  rendered definition HTML or the see-also derivation changes.
+  `.has_current_highlight_cache()` checks only that constant, so without a bump
+  a stale cache is served and the change never appears in the app.
 
-## Deployment
+### IPCC data is per-report
 
-Both apps are deployed to shinyapps.io. The deploy scripts read credentials from env vars (`SHINYAPPS_ACCOUNT`, `SHINYAPPS_TOKEN`, `SHINYAPPS_SECRET`, `SHINYAPPS_APP_NAME`). See `scripts/deploy_shinyapps_*.R` and `manifest.json`.
+The IPCC glossary is a per-(term, report) structure, and
+`inst/extdata/ipcc_glossary.csv` holds one row per pair. A term can be defined
+differently in each report -- 570 of 758 multi-report terms (75%) are -- so
+never collapse the reports to a single definition.
+
+Each report entry can also carry related-term pointers in `xref_kind` /
+`xref_target` / `xref_target_id`, of three kinds: `see` (redirect), `see_also`
+(supplementary) and `sub_terms` (narrower terms). The kind comes from the
+markup, never from whether the definition is blank: an entry may have a
+definition, pointers, both, or neither, and 35% of defined pairs carry pointers.
+
+Two rules that are easy to get wrong:
+
+- `xref_target` joins multiple targets with `" | "`. That is a **storage
+  delimiter only**; `.ipcc_xref_display()` produces the user-facing string.
+  Never render `xref_target` raw.
+- Pointers are displayed in their own block inside each definition card
+  (`.glossary-def-xref`), separated from the definition. They must **not** be
+  spliced into the definition text, and they must **not** feed the `See also`
+  panel -- that panel is derived across both sources from terms occurring in
+  definition text, while pointers are IPCC-specific.
+
+### Encoding: always build in a UTF-8 locale
+
+A bare `Rscript` usually runs in the `C` locale, where R cannot represent
+non-ASCII text natively and `write.csv()` silently replaces each character with
+a literal `<U+XXXX>` escape -- which `clean_html()` then strips as if it were an
+HTML tag. This corrupted degree signs, en-dashes, curly quotes and
+transliterated Sanskrit in both snapshots for a long time before it was caught.
+
+`.ensure_utf8_locale()` now guards `scrape_ipcc()` and both cache-building
+scripts and errors if no UTF-8 locale can be set. If you invoke anything that
+writes `inst/extdata/` by another route, prefix it:
+
+```bash
+LC_ALL=en_US.UTF-8 Rscript <script>
+```
+
+`tests/testthat/test-encoding.R` asserts the bundled snapshots stay clean.
+
+## Tests
+
+`tests/testthat/` covers the data pipeline, term catalog and lookup,
+highlighting, hover previews, see-also, both caches, and the server logic via
+`shiny::testServer()`. Fixtures in `helper-fixtures.R` build small synthetic
+glossaries and push them through the real load → summarise → merge pipeline.
 
 ## Development Notes
 
 - Roxygen2 (`RoxygenNote: 7.3.3`) for docs; run `devtools::document()` after changing `@` tags
-- AI development history is in `AI_PROMPTS.md` (3 sessions with Claude Code / Codex)
-- `BACKGROUND.md` has a technical deep-dive into similarity algorithms and caching design
+- AI development history is in `AI_PROMPTS.md`
+- `BACKGROUND.md` has a technical deep-dive into the merge, rendering and caching design

@@ -10,7 +10,7 @@ summarise_ipbes(ipbes_long)
 \item{ipbes_long}{Output of \code{\link[=load_ipbes]{load_ipbes()}}.}
 }
 \value{
-A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns:
+A \code{\link[dplyr:tibble]{dplyr::tibble()}} with columns:
 \describe{
 \item{concept}{Term name.}
 \item{n_assessments}{Number of distinct assessments.}

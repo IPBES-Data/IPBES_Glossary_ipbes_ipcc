@@ -1,21 +1,16 @@
-# Detailed Background: IPBES <-> IPCC Glossary Compare and Explore Apps
+# Detailed Background: IPBES <-> IPCC Glossary Explorer
 
 ## 1. Purpose
 
-This package provides two Shiny apps that use shared glossary data:
+This package provides one Shiny app, the glossary explorer (`run_glossary()`),
+which offers source-filtered lookup of IPBES and IPCC glossary terms with
+linked in-definition term navigation.
 
-- comparison app (`run_app()`)
-- glossary explorer app (`run_glossary()`)
-
-Both apps work with glossary terms and definitions from:
-
-- IPBES glossary
-- IPCC glossary
-
-The comparison app aligns terms, computes similarity metrics, shows word-level
-differences, and visualizes directed term hierarchy.
-The glossary explorer app provides source-filtered lookup with linked
-in-definition term navigation.
+> This branch carries the explorer only. The former comparison app (`run_app()`)
+> and everything that existed solely to support it -- TF-cosine similarity
+> scoring, LCS word-level diffs, the reactable comparison table, and the
+> directed term hierarchy graph -- have been removed. Sections 6, 7, 8, 10 and
+> 11 of the previous revision of this document covered those and are gone.
 
 ## 2. Data Sources and Artifacts
 
@@ -25,7 +20,6 @@ in-definition term navigation.
 - `inst/extdata/ipcc_glossary.csv`
 - `inst/extdata/ipcc_report_names.csv`
 - `inst/extdata/merged_glossary_cache.rds`
-- `inst/extdata/hierarchy_edges_cache.rds`
 
 These are shipped with the package and available on first startup.
 
@@ -39,38 +33,95 @@ The app also uses:
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/ipcc_glossary.csv`
 - `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/startup_merged_cache.rds`
 
-`ipcc_glossary.csv` in the user cache is created/updated by the "Update IPCC
-Glossary" button (when enabled). It does not modify `inst/extdata`.
+An `ipcc_glossary.csv` in the user cache takes precedence over the bundled
+snapshot. Note the consequence: while such a file is present the bundled
+`merged_glossary_cache.rds` is bypassed entirely and the app rebuilds
+everything on launch, which takes several minutes. Delete it to restore
+instant startup.
 
 ## 3. Scraping (IPCC)
 
-The app and `data-raw/prepare_data.R` scrape the IPCC glossary via the
-`search.php` endpoint family (all reports):
+The IPCC glossary is a per-report structure: a term can appear in many reports,
+each report may word the definition differently, and some report entries carry
+no definition at all. The scraper therefore works at (term, report)
+granularity.
+
+`scrape_ipcc()` in `R/data_ipcc.R` is the single implementation;
+`data-raw/prepare_data.R` calls it rather than keeping its own copy.
 
 1. Collect term IDs:
-   - `https://apps.ipcc.ch/glossary/ajax/ajax.searchbyindex.php?q=<PREFIX>`
-   - Parses `span.alllink[data-phraseid]`
-2. Fetch full occurrences/definitions:
-   - `https://apps.ipcc.ch/glossary/ajax/ajax.searchalloccurance.php?q=<PHRASE_ID>&r=`
-   - Reads definition from `dd p` (fallback: `dd`)
-   - Reads reports from `data-report` attributes
-3. Save rows:
-   - columns: `id`, `prefix`, `term`, `definition`, `reports`, `downloaded_at`
+   - `ajax.searchbyindex.php?q=<PREFIX>`, parsing `span.alllink[data-phraseid]`
+2. Fetch all occurrences of each term:
+   - `ajax.searchalloccurance.php?q=<PHRASE_ID>&r=`
+   - `.ipcc_parse_occurrences()` reads **every** `<dd>` block: the
+     `data-report` attribute gives the report, the first `<p>` gives that
+     report's own definition
+3. Fill in cross-references for report entries with no definition:
+   - `ajax.searchbyphraseandreport.php?q=<PHRASE_ID>&r=<REPORT>`
+   - `.ipcc_parse_cross_reference()` returns the kind (`see` / `see_also`),
+     the target term and its phrase id
+4. Write one row per (term, report):
+   `id`, `prefix`, `term`, `report`, `definition`, `xref_kind`,
+   `xref_target`, `xref_target_id`, `downloaded_at`
 
-Politeness/rate-limiting:
+Politeness: `Sys.sleep(0.3)` between requests, 15 s timeout.
 
-- `Sys.sleep(0.3)` between requests
-- request timeout set (15s)
+Term labels have working-group suffixes (`<< WGI >>` and guillemet forms)
+stripped.
 
-Term cleaning:
+### 3.1 Why per-report matters
 
-- Strips suffixes like `<<WGI>>` / guillemet forms from term labels.
+An earlier version read only `def_nodes[[1]]` -- the first `<dd>` -- and stored
+one definition per term, which `summarise_ipcc()` then repeated across every
+report in the list. Measured on the 2026-05-06 snapshot: 1,532 terms, 3,380
+(term, report) pairs, 804 terms (52%) appearing in more than one report and
+covering 2,652 pairs. In a sample of 8 multi-report terms, all 8 had genuinely
+different wording per report -- `Likelihood` has 9 reports and 8 distinct
+definitions. The app was attributing one report's text to all of them.
+
+The per-report definitions were always present in the bulk response, so
+capturing them costs no extra requests.
+
+### 3.2 Related-term pointers
+
+Each report entry can carry pointers to other terms, served only by
+`ajax.searchbyphraseandreport.php` and absent from the bulk response. The
+`ul.items` list is used for three different relationships, told apart by the
+`<h6>` heading above it and the prefix on each `<li>`:
+
+| Kind | Heading / prefix | Meaning |
+|------|------------------|---------|
+| `see` | `See...` | a redirect to another term |
+| `see_also` | `See Also...` | a supplementary pointer |
+| `sub_terms` | `Sub-terms` heading, no prefix | the narrower terms beneath this one |
+
+The kind must be read from the markup, never inferred from whether the
+definition is blank. A report entry may have a definition, pointers, both, or
+neither -- `Extreme climate event` in AR6 has a 730-character definition *and* a
+`See` redirect, and `Ice sheet` in SRCCL has a definition plus
+`See Also... Glacier`. Measured on a 60-pair sample, **35% of defined
+(term, report) pairs carry pointers.**
+
+Pointers vary per report: `Atmosphere-ocean general circulation model` is
+`See Climate model` in SRCCL but `See Climate model (spectrum or hierarchy)` in
+AR5-WG2.
+
+Storage is `xref_kind`, `xref_target` and `xref_target_id`, with multiple
+targets joined by `" | "`. **That pipe is a storage delimiter and must never
+reach the UI** -- `.ipcc_xref_display()` renders the display string, labelling
+by kind and joining with commas. A redirect wins when a row carries both kinds.
+
+Because a defined entry can also carry pointers, filling them requires the
+per-report endpoint for every pair, not just the definition-less ones:
+`.ipcc_fill_cross_references(scope = "all")`. `scope = "undefined"` is the
+cheaper pass that captures redirects only.
 
 ## 4. Loading and Cleaning
 
 ### 4.1 IPBES loading
 
 - Reads CSV from bundled snapshot.
+- Lowercases concept names so case variants group together.
 - Normalizes key columns (concept, definition, deliverables, etc.).
 - Splits multi-assessment entries into one row per assessment.
 - Cleans HTML/entities with `clean_html()`.
@@ -80,7 +131,14 @@ Term cleaning:
 - Uses cache file first, then bundled snapshot.
 - Ensures required columns exist.
 - Cleans definitions with `clean_html()`.
-- Expands semicolon-separated report list into one row per report for details.
+- Reads the per-(term, report) format directly. Legacy snapshots in the older
+  one-row-per-term shape (with a semicolon `reports` column) are still accepted:
+  `.ipcc_expand_legacy_reports()` expands them, repeating the single stored
+  definition across reports, so a stale user cache keeps working.
+- `summarise_ipcc()` keeps definitions exactly as the report words them and
+  carries the pointer display string in a separate `xref` column. Pointers are
+  IPCC's own editorial data and are shown apart from the definition, never
+  spliced into the quoted text.
 
 ## 5. Merging Logic
 
@@ -95,293 +153,115 @@ Output includes:
 
 - term labels and counts (`ipbes_n_assessments`, `ipcc_n_reports`)
 - detailed list-columns (`ipbes_data`, `ipcc_data`)
-- similarity metrics (`sim_within_ipbes`, `sim_within_ipcc`, `sim_between_all`)
 
-## 6. Similarity Calculation (Method)
+## 6. Rendering a Term
 
-All similarity scores are text-based cosine similarity on term-frequency vectors
-(no external API, no Wikipedia).
+For the selected term and source mode the app renders one section per source.
+Within a section, definitions that are textually identical across several
+assessments or reports are collapsed into a single card listing all of them.
 
-### 6.1 Tokenization
+### 6.1 In-definition term linking
 
-For each definition text:
+Every glossary term occurring inside a definition is turned into a link that
+navigates to that term. Matching is:
 
-- lower-case
-- remove non-letters (`[^a-z ]`)
-- split on whitespace
-- remove stopwords (internal `STOPWORDS` list)
-- no stemming/lemmatization (for example, `impact` and `impacts` are treated as different tokens)
-- keep term frequencies
+- case-insensitive, but the original casing in the text is preserved
+- constrained to whole words (`(?<![[:alnum:]]) ... (?![[:alnum:]])`)
+- longest-match-first, so `ecosystem services` wins over `services`
+- non-overlapping: once a span is claimed no shorter term can re-match it
 
-### 6.2 Pair similarity
+Definition text is HTML-escaped; only the generated anchors are markup.
 
-For two token-frequency vectors `a` and `b`:
+A candidate prefilter narrows the ~3,000 patterns to those whose first token
+occurs in the text. That prefilter must tokenize terms with the same
+`[[:alnum:]]+` rule used on the text. Splitting terms on whitespace instead
+produces first words such as `agro-ecological` or `(model)`, which can never
+appear in the text's alphanumeric token set -- previously silencing roughly 300
+terms. See `.glossary_highlight_dictionary()`.
 
-- dot product over shared tokens
-- cosine:
-  - `sim(a,b) = dot(a,b) / (||a|| * ||b||)`
-- range:
-  - `0` if no shared tokens
-  - `NA` if an input is empty after cleaning
+### 6.2 Related-term pointers vs. the See also panel
 
-### 6.3 Three displayed metrics
+These are two different things and are deliberately kept apart:
 
-1. Within IPBES:
-   - mean of all pairwise similarities among IPBES definitions of a term
-   - `NA` if fewer than 2 usable IPBES definitions
-2. Within IPCC:
-   - mean of all pairwise similarities among IPCC definitions of a term
-   - `NA` if fewer than 2 usable IPCC definitions
-3. Between All Definitions:
-   - mean of all cross pairs `IPBES x IPCC`
-   - `NA` if one side has no usable definitions
+- **Per-card pointers** (`.glossary-def-xref`) are IPCC's own report-specific
+  cross-references, rendered inside each definition card below the definition
+  and visually separated from it. Their targets are linked like any glossary
+  term.
+- **The `See also` panel** at the foot of the page is derived, not authored: it
+  lists every glossary term that happens to occur in the definitions currently
+  shown, across both sources, via `.glossary_collect_link_terms()`. It is not
+  fed by IPCC's pointers, precisely because it is cross-source while they are
+  IPCC-specific.
 
-Important detail:
+Cards are grouped on definition **and** pointers, so two reports sharing a
+definition but pointing elsewhere stay separate entries. A card with pointers
+but no definition shows "Listed in:" rather than "As defined in:".
 
-- Duplicates are intentionally kept in the similarity inputs, so repeated
-  assessment/report definitions contribute to the averages.
-
-### 6.4 How to interpret the similarity percentages
-
-- Similarity values are lexical (token-overlap based), not semantic/paraphrase
-  understanding.
-- `100%` means the cleaned token-frequency representation is identical.
-- High values generally indicate very similar wording.
-- Mid values often indicate partial overlap in terminology.
-- Low values indicate mostly different wording/vocabulary.
-- These measures are best used for ranking/comparison, not as absolute proof of
-  conceptual equivalence.
-
-## 7. Word-by-Word Difference (LCS Diff)
-
-Word-level diff uses Longest Common Subsequence (LCS) over word tokens.
-
-For a compared pair `(text_a, text_b)`:
-
-- unchanged words -> `same`
-- words only in `text_a` -> `del` (rendered as `<del>`)
-- words only in `text_b` -> `ins` (rendered as `<ins>`)
-
-Interpretation:
-
-- "Deleted" means present only on the left/first text (`text_a`).
-- "Inserted" (added) means present only on the right/second text (`text_b`).
-
-In matrix cells, labels clarify orientation:
-
-- `label_a` is the row/first item
-- `label_b` is the column/second item
-
-So "added" is always relative to the first (left-labeled) text.
-
-## 8. Overview vs Expanded Detail
-
-### 8.1 Overview table
-
-- One row per merged term.
-- Column order:
-  - Term
-  - Between similarity
-  - IPBES definition column (includes within-IPBES similarity bar)
-  - IPCC definition column (includes within-IPCC similarity bar)
-- Definitions with identical text are grouped; associated
-  assessments/reports are shown together (`;` separated, bold).
-
-### 8.2 Expanded row
-
-- Shows a single pairwise similarity matrix over grouped definitions.
-- Axis order:
-  - all grouped IPBES definitions first
-  - then grouped IPCC definitions
-- Upper triangle contains scores + word diff blocks.
-- Lower triangle is empty by design (to avoid duplicate pair display).
-- Very low-similarity pairs can show "Too different" based on threshold.
-
-## 9. Startup and Caching Behavior
+## 7. Startup and Caching Behavior
 
 Startup data load order:
 
 1. packaged merged cache (`inst/extdata/merged_glossary_cache.rds`) if valid
 2. user startup cache (`startup_merged_cache.rds`) if source signatures match
-3. full rebuild (load IPBES, load IPCC, merge, compute metrics)
+3. full rebuild (load IPBES, load IPCC, merge)
 
-After load, precomputed table HTML/cache fields are prepared and cached for
-faster rendering.
+The packaged cache is validated by the md5 sums of the two source CSVs; the
+user startup cache by their path, size and mtime.
 
-This is why current startup is much faster than full recompute on every load.
+### 7.1 Highlight cache
 
-## 10. Directed Hierarchy Graph (Graph Tab)
+The rendered `definition_html` for every definition and the `see_also_list` for
+every term are pre-computed at build time and stored in the merged cache,
+stamped with `.HIGHLIGHT_CACHE_VERSION`. This is what makes term selection
+instant instead of compiling ~3,000 regexes on first use.
 
-The app includes a dedicated `Graph` tab that estimates and visualizes a
-directed parent -> child hierarchy among matched terms.
+**Bump `.HIGHLIGHT_CACHE_VERSION` whenever the rendered HTML or the see-also
+derivation changes.** `.has_current_highlight_cache()` only checks that
+constant, so without a bump a stale cache is treated as current and the change
+never reaches the app -- a correct source tree and an unchanged UI.
 
-### 10.1 Directed subsumption score
-
-For candidate edge `(parent, child)`, the score is:
-
-- `score = 0.55 * lex_sub + 0.25 * def_contain + 0.20 * def_sim`
-
-Where:
-
-- `lex_sub`: fraction of parent term tokens also present in the child term
-- `def_contain`: fraction of parent term tokens present in the child definition text
-- `def_sim`: cosine similarity between combined parent/child definition texts
-
-Candidate gates:
-
-- `parent_token_n < child_token_n`
-- must pass lexical or definition-containment gate before final scoring
-
-Default display threshold in the graph UI is `min_score = 0.65`.
-
-Interpretation guidance:
-
-- Higher SS scores indicate stronger evidence that the parent term subsumes the
-  child term.
-- The score combines:
-  - lexical containment in term names (`lex_sub`)
-  - parent-token containment in child definitions (`def_contain`)
-  - overall definition similarity (`def_sim`)
-- Raising `Minimum subsumption score` keeps only stronger, more conservative
-  edges; lowering it adds weaker/less certain edges.
-
-### 10.2 Graph interaction model
-
-- Click a node to select its connected tree (ancestors + descendants).
-- Selected tree remains colored; non-linked nodes/edges are greyed.
-- Click background to clear selection.
-- Use `Focus Previous Tree` / `Focus Next Tree` to navigate top-level trees.
-- Use `Reset View` to fit/pan/zoom back to the currently selected tree.
-- Top-level trees are arranged left-to-right by descending tree size (ties:
-  alphabetical by root term).
-- Root labels are rendered above root nodes with stronger visual emphasis.
-
-All edges above the minimum score threshold are shown (no max-edges truncation).
-
-Selection is shared with the main table: selected graph terms are highlighted in
-the table rows.
-
-### 10.3 Graph controls and tooltips
-
-The graph controls include inline hover tooltips (`title` attributes) that
-explain each control:
-
-- `Select Tree`: choose the currently plotted tree (type-ahead filtering).
-- `Sort trees alphabetically`: toggle selector ordering (alphabetical vs
-  descending node count).
-- `Focus Previous Tree` / `Focus Next Tree`: move through trees following the
-  selector ordering.
-- `Reset View`: reset pan/zoom to fit the selected tree.
-- `Minimum subsumption score`: filter edges to `score >= threshold`.
-  Higher values keep only stronger parent -> child relations.
-- `Keep only best parent per child`: at current threshold, retain only the
-  strongest incoming edge for each child term.
-- `Export format`: choose `HTML (offline)` or `PDF (print)`.
-- `Export`: generate a report with current settings, a graph snapshot, the
-  selected-tree directed-edge table, and the selected-tree glossary table.
-  In HTML exports, the graph is interactive (zoom, pan, node dragging, and
-  hover tooltips).
-
-### 10.4 Graph caching
-
-Hierarchy edge scoring is cached in:
-
-- `tools::R_user_dir("glossary.ipbes.ipcc", "cache")/hierarchy_edges_cache.rds`
-
-If runtime cache is absent (for example on hosted cold starts), the app falls
-back to bundled cache:
-
-- `inst/extdata/hierarchy_edges_cache.rds`
-
-Cache is invalidated by a fingerprint over merged term/definition content.
-
-## 11. Local vs Hosted Behavior
-
-By default (comparison app):
-
-- Local run: live IPCC update button enabled
-- shinyapps.io hosted runtime: live update disabled ("Hosted mode" label shown)
-
-Override via env var:
-
-- `GLOSSARY_ENABLE_LIVE_UPDATE=1` -> force enable
-- `GLOSSARY_ENABLE_LIVE_UPDATE=0` -> force disable
-
-Hosted-safe deploy script (`scripts/deploy_shinyapps_compare.R`) sets hosted default
-to disabled unless explicitly overridden.
-
-## 12. Running Locally
-
-### 11.1 Run apps
+## 8. Running Locally
 
 ```r
-# Comparison app
-glossary.ipbes.ipcc::run_app()
-
-# Glossary explorer app
 glossary.ipbes.ipcc::run_glossary()
 ```
 
-### 11.2 Run comparison app and force update behavior
+### 8.1 Deploy entrypoint for shinyapps.io
 
-```r
-# disable update button
-glossary.ipbes.ipcc::run_app(enable_live_update = FALSE)
+- `app_glossary.R` (explorer)
+- `app.R` (Posit Connect / Posit Cloud)
 
-# or via env var
-Sys.setenv(GLOSSARY_ENABLE_LIVE_UPDATE = "0")
-glossary.ipbes.ipcc::run_app()
+### 8.2 Refresh packaged snapshots for release
+
+```bash
+Rscript inst/scripts/update_bundled_caches.R --force   # caches only
+Rscript inst/scripts/scrape_ipcc_and_update_caches.R   # scrape + caches
 ```
 
-### 11.3 Deploy entrypoints for shinyapps.io
-
-- Comparison app:
-  - entrypoint: `app_compare.R`
-  - deploy script: `scripts/deploy_shinyapps_compare.R`
-- Glossary explorer app:
-  - entrypoint: `app_glossary.R`
-  - deploy script: `scripts/deploy_shinyapps_glossary.R`
-
-### 11.4 Refresh packaged snapshots for release
-
-For package-maintained snapshots (not just runtime cache):
+or, for a full rebuild including the IPBES copy:
 
 ```r
 source("data-raw/prepare_data.R")
 ```
 
-This regenerates:
+## 9. Tests
 
-- `inst/extdata/ipbes_glossary.csv`
-- `inst/extdata/ipcc_glossary.csv`
-- `inst/extdata/merged_glossary_cache.rds`
-- `inst/extdata/hierarchy_edges_cache.rds`
+`devtools::test()` runs the suite in `tests/testthat/`:
 
-If you already updated one or both CSV files in `inst/extdata/` and only need
-to refresh bundled caches, run:
+| File | Covers |
+|------|--------|
+| `test-utils.R` | HTML cleaning, term normalisation, qualifier stripping |
+| `test-data-loading.R` | IPBES/IPCC load and summarise, source path resolution |
+| `test-merge.R` | outer join, qualifier-stripped pass, unmatched rows |
+| `test-term-catalog.R` | catalog construction, row lookup, choice resolution |
+| `test-highlighting.R` | dictionary, matching rules, escaping, term finding |
+| `test-grouping-and-sources.R` | definition grouping, report-name expansion |
+| `test-hover-and-see-also.R` | hover previews, see-also derivation |
+| `test-highlight-cache.R` | highlight cache stamping and invalidation |
+| `test-startup-cache.R` | signatures, round-trip, rejection, packaged cache |
+| `test-server.R` | server logic end to end via `shiny::testServer()` |
+| `test-terms-without-definitions.R` | regression cover for the cross-reference gap |
 
-```r
-system("Rscript inst/scripts/update_bundled_caches.R")
-```
-
-Use `--force` to rebuild even when metadata indicates caches are current.
-
-To scrape a fresh IPCC snapshot and then refresh all bundled caches in one step:
-
-```r
-system("Rscript inst/scripts/scrape_ipcc_and_update_caches.R")
-```
-
-Then rebuild/reinstall package as needed.
-
-### 11.5 Glossary explorer UX notes (v0.9.8)
-
-Recent glossary explorer presentation updates include:
-
-- dedicated in-app `About` modal with maintained project context text
-- footer placement of `GitHub Issues` under the data-source links
-- dynamic section headers in the form
-  `"<selected term> in IPBES Glossary"` / `"<selected term> in IPCC Glossary"`
-- combined `See also` list across displayed definitions, sorted alphabetically
-- attribution wording updated to
-  `Senckenberg Biodiversity and Climate`
+Fixtures in `helper-fixtures.R` push small synthetic glossaries through the
+real load -> summarise -> merge pipeline rather than hand-building merged
+tables, so they exercise the same code path the app uses at startup.

@@ -24,8 +24,7 @@ if (!nzchar(app_name)) {
 required_cache_files <- c(
   "inst/extdata/ipbes_glossary.csv",
   "inst/extdata/ipcc_glossary.csv",
-  "inst/extdata/merged_glossary_cache.rds",
-  "inst/extdata/hierarchy_edges_cache.rds"
+  "inst/extdata/merged_glossary_cache.rds"
 )
 
 missing_cache_files <- required_cache_files[!file.exists(required_cache_files)]

@@ -1,7 +1,7 @@
 Package: glossary.ipbes.ipcc
-Title: Compare IPBES and IPCC Glossaries
-Version: 1.1.1
-Date: 2026-05-06
+Title: Explore the IPBES and IPCC Glossaries
+Version: 2.0.0
+Date: 2026-09-28
 Author: IPBES TSU Knowledge and Data [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-4511-3407>), Aidin Niamir [ctb, rev]
 Maintainer: IPBES TSU Knowledge and Data <aidin.niamir@senckenberg.de>
@@ -12,34 +12,27 @@ Authors@R: c(
     person("Aidin Niamir", role = c("ctb", "rev"),
            email = "aidin.niamir@senckenberg.de",
            comment = c(ORCID = "0000-0003-4511-3407")))
-Description: Shiny applications to compare and explore the IPBES biodiversity
-    glossary and the IPCC climate change glossary. The comparison app aligns
-    terms, computes similarity scores, shows word-level differences, and
-    visualizes a directed term hierarchy. The glossary explorer app provides
-    source-specific term lookup with linked in-definition navigation. Hosted-safe
-    deployment modes are included for shinyapps.io.
+Description: A Shiny application to explore the IPBES biodiversity glossary and
+    the IPCC climate change glossary side by side. Terms from both sources are
+    aligned, and definitions are shown per assessment or report with glossary
+    terms inside them linked for in-definition navigation.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
     R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 LazyData: false
 Imports:
     shiny (>= 1.8.0),
-    reactable (>= 0.4.4),
     htmltools (>= 0.5.0),
     httr (>= 1.4.0),
     rvest (>= 1.0.0),
     tibble (>= 3.2.0),
-    visNetwork (>= 2.1.2),
     tools,
     utils
 Suggests:
-    shinyjs (>= 2.1.0),
-    shinyWidgets (>= 0.8.0),
-    diffobj (>= 0.3.5),
     testthat (>= 3.0.0),
+    withr (>= 2.5.0),
     knitr,
     rmarkdown
 VignetteBuilder: knitr
@@ -47,3 +40,4 @@ Config/testthat/edition: 3
 URL: https://github.com/rkrug/glossary_ipbes_ipcc,
     https://github.com/rkrug/glossary_ipbes_ipcc/issues
 BugReports: https://github.com/rkrug/glossary_ipbes_ipcc/issues
+Config/roxygen2/version: 8.0.0

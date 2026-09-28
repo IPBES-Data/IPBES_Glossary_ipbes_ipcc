@@ -1,6 +1,12 @@
 # Glossary explorer app entry point
 # =============================================================================
-.HIGHLIGHT_CACHE_VERSION <- 1L
+# Bump whenever the rendered definition HTML or see-also derivation changes,
+# so any cache produced by older code is rebuilt instead of silently reused.
+# 2L: term-matching prefilter fixed (terms whose first word contains
+#     punctuation were previously never highlighted).
+# 3L: IPCC related-term pointers moved out of the definition text into their own
+#     rendered field (xref / xref_html).
+.HIGHLIGHT_CACHE_VERSION <- 3L
 
 #' Run the interactive glossary explorer app
 #'
@@ -10,8 +16,9 @@
 #'
 #' @param cache_dir Directory used to store and read cached glossary snapshots.
 #'   Defaults to [tools::R_user_dir()] cache.
+#' @param port Port the app listens on, passed to [shiny::runApp()].
 #' @param ... Additional arguments passed to [shiny::runApp()] (for example
-#'   `launch.browser`, `port`).
+#'   `launch.browser`).
 #' @return Invisibly, a [shiny::shinyApp()] object.
 #' @examples
 #' \dontrun{
@@ -29,9 +36,7 @@ run_glossary <- function(
 
 .create_glossary_app <- function(cache_dir) {
   .ensure_cache_dir(cache_dir)
-  merged <- .load_merged_data(cache_dir,
-                              prepare_table_cache    = FALSE,
-                              prepare_highlight_cache = TRUE)
+  merged <- .load_merged_data(cache_dir, prepare_highlight_cache = TRUE)
   .register_www_assets()
 
   shiny::shinyApp(
@@ -44,17 +49,7 @@ run_glossary <- function(
   issues_url <- "https://github.com/rkrug/glossary_ipbes_ipcc/issues"
   about_url <- "custom/about_glossary.html"
   app_version <- .app_version_string()
-  desc_date <- tryCatch({
-    dcf <- read.dcf(system.file("DESCRIPTION", package = "glossary.ipbes.ipcc"))
-    if (nrow(dcf) > 0 && "Date" %in% colnames(dcf)) as.Date(trimws(dcf[1, "Date"])) else NA
-  }, error = function(e) NA)
-  if (is.na(desc_date)) {
-    p <- file.path(getwd(), "DESCRIPTION")
-    desc_date <- tryCatch({
-      dcf <- read.dcf(p)
-      if (nrow(dcf) > 0 && "Date" %in% colnames(dcf)) as.Date(trimws(dcf[1, "Date"])) else Sys.Date()
-    }, error = function(e) Sys.Date())
-  }
+  desc_date <- .package_date_safe()
   app_date <- paste(
     as.integer(format(desc_date, "%d")),
     format(desc_date, "%B"),
@@ -442,6 +437,7 @@ run_glossary <- function(
       source_label = "Assessments",
       source_class = "ipbes",
       grouped = grouped,
+      source_col = "assessment",
       dict = dict,
       hover_lookup = hover_lookup
     ))
@@ -458,6 +454,7 @@ run_glossary <- function(
     source_label = "Reports",
     source_class = "ipcc",
     grouped = grouped,
+    source_col = "report",
     dict = dict,
     hover_lookup = hover_lookup
   )
@@ -490,6 +487,7 @@ run_glossary <- function(
     source_label,
     source_class,
     grouped,
+    source_col = NULL,
     dict,
     hover_lookup
 ) {
@@ -518,33 +516,65 @@ run_glossary <- function(
     ))
   }
 
-  source_col <- setdiff(names(grouped), "definition")[[1]]
+  if (is.null(source_col)) {
+    source_col <- setdiff(names(grouped),
+                          c("definition", "definition_html", "xref", "xref_html"))[[1]]
+  }
+
   cards <- lapply(seq_len(nrow(grouped)), function(i) {
-    src <- as.character(grouped[[source_col]][i])
-    src <- .glossary_source_inline(src)
-    def <- as.character(grouped$definition[i])
-    def_html <- if ("definition_html" %in% names(grouped) &&
-                    !is.na(grouped$definition_html[[i]]) &&
-                    nzchar(grouped$definition_html[[i]])) {
+    src <- .glossary_source_inline(as.character(grouped[[source_col]][i]))
+    def <- trimws(as.character(grouped$definition[i]))
+    has_def <- !is.na(def) && nzchar(def)
+
+    def_html <- if (!has_def) {
+      NULL
+    } else if ("definition_html" %in% names(grouped) &&
+               !is.na(grouped$definition_html[[i]]) &&
+               nzchar(grouped$definition_html[[i]])) {
       grouped$definition_html[[i]]
     } else {
       .glossary_highlight_definition(def, dict, hover_lookup)
     }
 
+    # Related-term pointers are the source's own editorial cross-references.
+    # They are shown in their own block, clearly separated from the definition,
+    # and never spliced into the quoted definition text.
+    xref <- if ("xref" %in% names(grouped)) trimws(as.character(grouped$xref[i])) else ""
+    if (is.na(xref)) xref <- ""
+    xref_ui <- if (!nzchar(xref)) {
+      NULL
+    } else {
+      xref_html <- if ("xref_html" %in% names(grouped) &&
+                       !is.na(grouped$xref_html[[i]]) &&
+                       nzchar(grouped$xref_html[[i]])) {
+        grouped$xref_html[[i]]
+      } else {
+        .glossary_highlight_definition(xref, dict, hover_lookup)
+      }
+      htmltools::div(
+        class = "glossary-def-xref",
+        htmltools::HTML(xref_html)
+      )
+    }
+
     htmltools::div(
       class = "glossary-def-card",
       style = card_style,
+      if (!is.null(def_html)) {
         htmltools::div(
           class = "glossary-def-body",
           style = "font-size:1.36rem; line-height:1.65;",
           htmltools::HTML(paste0("&ldquo;", def_html, "&rdquo;"))
-        ),
-        htmltools::div(
-          class = "glossary-def-meta",
-          style = "display:block; margin-top:1.1em; padding-top:0.1em; font-size:1.06rem; line-height:1.4; color:#556176;",
-          htmltools::tags$strong(style = "font-size:inherit; font-weight:700;", "As defined in: "),
-          src
         )
+      },
+      xref_ui,
+      htmltools::div(
+        class = "glossary-def-meta",
+        style = "display:block; margin-top:1.1em; padding-top:0.1em; font-size:1.06rem; line-height:1.4; color:#556176;",
+        htmltools::tags$strong(style = "font-size:inherit; font-weight:700;",
+                               if (has_def) "As defined in: " else "Listed in: "),
+        src
+      )
     )
   })
 
@@ -665,11 +695,15 @@ run_glossary <- function(
 
 .glossary_group_definitions <- function(detail_df, source_col) {
   has_html <- "definition_html" %in% names(detail_df)
+  has_xref <- "xref" %in% names(detail_df)
+  has_xref_html <- "xref_html" %in% names(detail_df)
 
   .empty_grouped <- function() {
     out <- data.frame(character(0), character(0), stringsAsFactors = FALSE)
     names(out) <- c(source_col, "definition")
     if (has_html) out$definition_html <- character(0)
+    if (has_xref) out$xref <- character(0)
+    if (has_xref_html) out$xref_html <- character(0)
     out
   }
 
@@ -677,40 +711,69 @@ run_glossary <- function(
     return(.empty_grouped())
   }
 
-  defs <- trimws(as.character(detail_df$definition))
-  keep <- !is.na(defs) & nzchar(defs)
+  blank <- function(x) {
+    x <- trimws(as.character(x))
+    x[is.na(x)] <- ""
+    x
+  }
+
+  defs  <- blank(detail_df$definition)
+  xrefs <- if (has_xref) blank(detail_df$xref) else rep("", length(defs))
+
+  # A report entry is worth showing if it has a definition, pointers, or both.
+  keep <- nzchar(defs) | nzchar(xrefs)
   if (!any(keep)) return(.empty_grouped())
 
   detail_df <- detail_df[keep, , drop = FALSE]
-  defs <- trimws(as.character(detail_df$definition))
-  src <- if (source_col %in% names(detail_df)) trimws(as.character(detail_df[[source_col]])) else rep("", length(defs))
+  defs  <- blank(detail_df$definition)
+  xrefs <- if (has_xref) blank(detail_df$xref) else rep("", length(defs))
+  src <- if (source_col %in% names(detail_df)) {
+    blank(detail_df[[source_col]])
+  } else {
+    rep("", length(defs))
+  }
   html_vals <- if (has_html) as.character(detail_df$definition_html) else rep(NA_character_, length(defs))
+  xref_html_vals <- if (has_xref_html) as.character(detail_df$xref_html) else rep(NA_character_, length(defs))
 
+  # Group on definition AND pointers: two reports sharing a definition but
+  # pointing elsewhere are genuinely different entries and must not be merged.
+  keys <- paste(defs, xrefs, sep = "\r")
   rows <- list()
+  seen_keys <- character(0)
   for (i in seq_along(defs)) {
-    def_i  <- defs[[i]]
-    src_i  <- src[[i]]
-    html_i <- html_vals[[i]]
-    idx <- match(def_i, vapply(rows, function(x) x$definition, character(1)))
+    idx <- match(keys[[i]], seen_keys)
     if (is.na(idx)) {
+      seen_keys <- c(seen_keys, keys[[i]])
       rows[[length(rows) + 1]] <- list(
-        definition      = def_i,
-        definition_html = html_i,
-        sources         = if (!is.na(src_i) && nzchar(src_i)) src_i else character(0)
+        definition      = defs[[i]],
+        definition_html = html_vals[[i]],
+        xref            = xrefs[[i]],
+        xref_html       = xref_html_vals[[i]],
+        sources         = if (nzchar(src[[i]])) src[[i]] else character(0)
       )
-    } else if (!is.na(src_i) && nzchar(src_i) && !src_i %in% rows[[idx]]$sources) {
-      rows[[idx]]$sources <- c(rows[[idx]]$sources, src_i)
+    } else if (nzchar(src[[i]]) && !src[[i]] %in% rows[[idx]]$sources) {
+      rows[[idx]]$sources <- c(rows[[idx]]$sources, src[[i]])
     }
   }
 
   out <- data.frame(
-    sources         = vapply(rows, function(x) paste(x$sources, collapse = "\n"), character(1)),
-    definition      = vapply(rows, function(x) x$definition, character(1)),
+    sources    = vapply(rows, function(x) paste(x$sources, collapse = "\n"), character(1)),
+    definition = vapply(rows, function(x) x$definition, character(1)),
     stringsAsFactors = FALSE
   )
   names(out)[1] <- source_col
   if (has_html) {
-    out$definition_html <- vapply(rows, function(x) if (!is.null(x$definition_html)) x$definition_html else NA_character_, character(1))
+    out$definition_html <- vapply(rows, function(x) {
+      if (!is.null(x$definition_html)) x$definition_html else NA_character_
+    }, character(1))
+  }
+  if (has_xref) {
+    out$xref <- vapply(rows, function(x) x$xref, character(1))
+  }
+  if (has_xref_html) {
+    out$xref_html <- vapply(rows, function(x) {
+      if (!is.null(x$xref_html)) x$xref_html else NA_character_
+    }, character(1))
   }
   out
 }
@@ -796,10 +859,12 @@ run_glossary <- function(
 .prepare_glossary_highlight_data <- function(data) {
   if (.has_current_highlight_cache(data)) return(data)
 
-  message("Pre-computing definition highlights…")
+  message("Pre-computing definition highlights\u2026")
   all_terms <- .glossary_term_catalog(data, "both")
   dict      <- .glossary_highlight_dictionary(all_terms)
   hover     <- .glossary_hover_lookup(data, "both")
+
+  data$see_also_list <- vector("list", nrow(data))
 
   for (i in seq_len(nrow(data))) {
     ipbes_df <- data$ipbes_data[[i]]
@@ -819,6 +884,16 @@ run_glossary <- function(
         .glossary_highlight_definition, character(1),
         dict = dict, hover_lookup = hover
       )
+      if ("xref" %in% names(ipcc_df)) {
+        ipcc_df$xref_html <- vapply(
+          ipcc_df$xref,
+          function(x) {
+            if (is.na(x) || !nzchar(trimws(x))) return("")
+            .glossary_highlight_definition(x, dict, hover)
+          },
+          character(1)
+        )
+      }
       data$ipcc_data[[i]] <- ipcc_df
     }
 
@@ -846,8 +921,15 @@ run_glossary <- function(
   escaped <- gsub("\\s+", "\\\\s+", escaped)
   patterns <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
 
+  # Must use the same tokenizer as .glossary_highlight_definition() applies to
+  # the definition text ([[:alnum:]]+). Splitting on whitespace instead would
+  # yield first words like "agro-ecological" or "(model)", which can never
+  # appear in the text's alphanumeric token set, so those terms would silently
+  # never be highlighted. Terms with no alphanumeric run get "" and are always
+  # treated as candidates.
   first_words <- tolower(vapply(terms, function(t) {
-    strsplit(trimws(t), "\\s+")[[1]][1]
+    toks <- regmatches(t, gregexpr("[[:alnum:]]+", t, perl = TRUE))[[1]]
+    if (length(toks) == 0) "" else toks[[1]]
   }, character(1), USE.NAMES = FALSE))
 
   list(
@@ -876,7 +958,7 @@ run_glossary <- function(
                       gregexpr("[[:alnum:]]+", tolower(txt), perl = TRUE))[[1]])
   } else NULL
   candidate_idx <- if (!is.null(txt_words)) {
-    which(dict$first_words %in% txt_words)
+    which(dict$first_words %in% txt_words | !nzchar(dict$first_words))
   } else {
     seq_along(dict$terms)
   }

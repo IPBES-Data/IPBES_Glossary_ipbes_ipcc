@@ -20,7 +20,7 @@ load_ipbes(
 \verb{inst/extdata/}.}
 }
 \value{
-A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns:
+A \code{\link[dplyr:tibble]{dplyr::tibble()}} with columns:
 \describe{
 \item{term_id}{Numeric IPBES term identifier.}
 \item{concept}{Glossary term name (lower-cased original).}

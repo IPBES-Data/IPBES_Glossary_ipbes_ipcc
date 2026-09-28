@@ -6,15 +6,18 @@
 \usage{
 run_glossary(
   cache_dir = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
+  port = 7654,
   ...
 )
 }
 \arguments{
 \item{cache_dir}{Directory used to store and read cached glossary snapshots.
-Defaults to \code{\link[tools:userdir]{tools::R_user_dir()}} cache.}
+Defaults to \code{\link[tools:R_user_dir]{tools::R_user_dir()}} cache.}
+
+\item{port}{Port the app listens on, passed to \code{\link[shiny:runApp]{shiny::runApp()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[shiny:runApp]{shiny::runApp()}} (for example
-\code{launch.browser}, \code{port}).}
+\code{launch.browser}).}
 }
 \value{
 Invisibly, a \code{\link[shiny:shinyApp]{shiny::shinyApp()}} object.

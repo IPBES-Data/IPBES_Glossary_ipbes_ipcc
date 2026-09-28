@@ -51,7 +51,6 @@ extdata_dir <- file.path(repo_root, "inst", "extdata")
 ipbes_path <- file.path(extdata_dir, "ipbes_glossary.csv")
 ipcc_path <- file.path(extdata_dir, "ipcc_glossary.csv")
 merged_cache_path <- file.path(extdata_dir, "merged_glossary_cache.rds")
-hier_cache_path <- file.path(extdata_dir, "hierarchy_edges_cache.rds")
 
 if (!dir.exists(extdata_dir)) stop("Missing extdata directory: ", extdata_dir)
 if (!file.exists(ipbes_path)) stop("Missing file: ", ipbes_path)
@@ -60,14 +59,16 @@ if (!file.exists(ipcc_path)) stop("Missing file: ", ipcc_path)
 cat("Package root:", repo_root, "\n")
 cat("Force rebuild:", if (force) "yes" else "no", "\n")
 
+source(file.path(repo_root, "R", "app.R"))
 source(file.path(repo_root, "R", "utils.R"))
 source(file.path(repo_root, "R", "data_ipbes.R"))
 source(file.path(repo_root, "R", "data_ipcc.R"))
-source(file.path(repo_root, "R", "similarity_text.R"))
 source(file.path(repo_root, "R", "data_merge.R"))
-source(file.path(repo_root, "R", "mod_table.R"))
-source(file.path(repo_root, "R", "hierarchy_terms.R"))
-source(file.path(repo_root, "R", "mod_graph.R"))
+source(file.path(repo_root, "R", "ipcc_report_names.R"))
+source(file.path(repo_root, "R", "app_glossary.R"))
+
+# Fail loudly rather than writing mangled non-ASCII into the snapshots.
+.ensure_utf8_locale()
 
 ipbes_md5 <- unname(as.character(tools::md5sum(ipbes_path)[[1]]))
 ipcc_md5 <- unname(as.character(tools::md5sum(ipcc_path)[[1]]))
@@ -100,23 +101,15 @@ ipcc_raw <- load_ipcc(cache_dir = tempdir(), bundled_path = ipcc_path)
 ipcc_sum <- summarise_ipcc(ipcc_raw)
 
 merged <- merge_glossaries(ipbes_sum, ipcc_sum)
-merged <- .prepare_table_data(merged)
+
+# Pre-compute the definition highlight cache so the explorer starts instantly
+# instead of rebuilding ~3,000 rows of highlighted HTML on first launch.
+merged <- .prepare_glossary_highlight_data(merged)
 
 saveRDS(
   list(meta = expected_merged_meta, merged = merged),
   merged_cache_path
 )
 cat(sprintf("Saved %s (%d rows)\n", merged_cache_path, nrow(merged)))
-
-hier_edges <- compute_term_hierarchy(
-  merged_data = merged,
-  min_score = 0,
-  best_parent_only = FALSE
-)
-saveRDS(
-  list(meta = .hierarchy_cache_meta(merged), edges = hier_edges),
-  hier_cache_path
-)
-cat(sprintf("Saved %s (%d edges)\n", hier_cache_path, nrow(hier_edges)))
 
 cat("Done.\n")

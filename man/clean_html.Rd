@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{clean_html}
 \alias{clean_html}
-\title{Strip HTML tags and decode common entities}
+\title{Common English stopwords}
 \usage{
 clean_html(text)
 }
@@ -13,6 +13,10 @@ clean_html(text)
 Character vector with HTML removed.
 }
 \description{
+A character vector of ~60 common English stopwords used when tokenising
+definition text for similarity computation.
+}
+\details{
 Strip HTML tags and decode common entities
 }
 \keyword{internal}

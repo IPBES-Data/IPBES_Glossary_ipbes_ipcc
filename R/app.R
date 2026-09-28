@@ -1,47 +1,10 @@
 # Package entry point
 # =============================================================================
 
-#' Run the IPBES/IPCC Glossary Comparison Shiny App
-#'
-#' Launches the interactive Shiny application that displays IPBES and IPCC
-#' glossary definitions side-by-side with similarity scores and word-level
-#' diffs.
-#'
-#' @param cache_dir Directory used to store:
-#'   * The user-updated IPCC glossary CSV (written by the "Update" button).
-#'
-#'   Defaults to a package-specific subdirectory of the OS user cache directory
-#'   as returned by [tools::R_user_dir()].  The directory is created
-#'   automatically if it does not exist.
-#' @param enable_live_update Logical; whether the "Update IPCC Glossary" control
-#'   is enabled. Defaults to `.default_live_update_enabled()`, which disables
-#'   live updates on hosted shinyapps.io deployments and enables them locally.
-#' @param ... Additional arguments passed to [shiny::shinyApp()] (e.g.
-#'   `launch.browser`, `port`).
-#' @return Invisibly, the [shiny::shinyApp()] object (only relevant when
-#'   `launch.browser = FALSE`).
-#' @examples
-#' \dontrun{
-#' glossary.ipbes.ipcc::run_app()
-#' }
-#' @export
-run_app <- function(
-    cache_dir = tools::R_user_dir("glossary.ipbes.ipcc", which = "cache"),
-    enable_live_update = .default_live_update_enabled(),
-    ...
-) {
-  app <- .create_shiny_app(
-    cache_dir = cache_dir,
-    enable_live_update = enable_live_update
-  )
-
-  shiny::runApp(app, ...)
-}
-
 # Resolve package version safely.
-# - Prefer DESCRIPTION version (source checkout / appDir deployments)
-# - Fall back to installed package version
-.package_version_safe <- function(package = "glossary.ipbes.ipcc") {
+# - Prefer the DESCRIPTION of the source checkout / appDir deployment
+# - Fall back to the installed package
+.package_desc_field <- function(field) {
   root <- tryCatch(
     if (exists(".source_pkg_root", mode = "function")) .source_pkg_root() else "",
     error = function(e) ""
@@ -49,18 +12,25 @@ run_app <- function(
 
   desc_candidates <- c(
     if (nzchar(root)) file.path(root, "DESCRIPTION") else "",
-    file.path(getwd(), "DESCRIPTION")
+    file.path(getwd(), "DESCRIPTION"),
+    system.file("DESCRIPTION", package = "glossary.ipbes.ipcc")
   )
   desc_candidates <- unique(desc_candidates[nzchar(desc_candidates)])
 
   for (desc_path in desc_candidates) {
     if (!file.exists(desc_path)) next
     dcf <- tryCatch(read.dcf(desc_path), error = function(e) NULL)
-    if (!is.null(dcf) && "Version" %in% colnames(dcf)) {
-      ver <- trimws(dcf[1, "Version"])
-      if (nzchar(ver)) return(ver)
+    if (!is.null(dcf) && field %in% colnames(dcf)) {
+      val <- trimws(dcf[1, field])
+      if (nzchar(val)) return(val)
     }
   }
+  ""
+}
+
+.package_version_safe <- function(package = "glossary.ipbes.ipcc") {
+  ver <- .package_desc_field("Version")
+  if (nzchar(ver)) return(ver)
 
   ver <- tryCatch(
     as.character(utils::packageVersion(package)),
@@ -69,23 +39,11 @@ run_app <- function(
   if (!nzchar(ver)) "unknown" else ver
 }
 
-# Build the runnable shinyApp object with preloaded data.
-.create_shiny_app <- function(cache_dir, enable_live_update) {
-  .ensure_cache_dir(cache_dir)
-  merged <- .load_merged_data(cache_dir, prepare_table_cache = TRUE)
-  .register_www_assets()
-
-  # ---- Launch app ----------------------------------------------------------
-  app <- shiny::shinyApp(
-    ui     = build_ui(enable_live_update = enable_live_update),
-    server = build_server(
-      cache_dir = cache_dir,
-      initial_data = merged,
-      enable_live_update = enable_live_update
-    )
-  )
-
-  app
+# Release date shown next to the version. Same source as the version, so the
+# two can never disagree.
+.package_date_safe <- function() {
+  d <- suppressWarnings(as.Date(.package_desc_field("Date")))
+  if (is.na(d)) Sys.Date() else d
 }
 
 # Ensure cache directory exists.
@@ -97,8 +55,7 @@ run_app <- function(
 }
 
 # Load merged glossary data with cache-first startup behavior.
-.load_merged_data <- function(cache_dir, prepare_table_cache = TRUE,
-                              prepare_highlight_cache = FALSE) {
+.load_merged_data <- function(cache_dir, prepare_highlight_cache = TRUE) {
   .ensure_cache_dir(cache_dir)
 
   bundled_ipcc <- .pkg_file("extdata", "ipcc_glossary.csv")
@@ -139,12 +96,6 @@ run_app <- function(
     message("Loaded merged glossary from packaged cache.")
   } else if (identical(loaded_from, "startup")) {
     message("Loaded merged glossary from startup cache.")
-  }
-
-  if (isTRUE(prepare_table_cache) && !.has_current_table_view_cache(merged)) {
-    message("Preparing table view cache...")
-    merged <- .prepare_table_data(merged)
-    .save_startup_merged_cache(cache_dir, cache_meta, merged)
   }
 
   if (isTRUE(prepare_highlight_cache) && !.has_current_highlight_cache(merged)) {
@@ -235,7 +186,6 @@ run_app <- function(
 
   required_cols <- c(
     "matched_term", "ipbes_concept", "ipcc_term",
-    "sim_within_ipbes", "sim_within_ipcc", "sim_between_all",
     "ipbes_data", "ipcc_data"
   )
   if (!all(required_cols %in% names(obj$merged))) return(NULL)
@@ -256,7 +206,6 @@ run_app <- function(
 
   required_cols <- c(
     "matched_term", "ipbes_concept", "ipcc_term",
-    "sim_within_ipbes", "sim_within_ipcc", "sim_between_all",
     "ipbes_data", "ipcc_data"
   )
   if (!all(required_cols %in% names(obj$merged))) return(NULL)
@@ -327,23 +276,7 @@ run_app <- function(
   invisible(merged)
 }
 
-# Default runtime switch for live updates:
-# - Local/dev: enabled
-# - shinyapps.io hosted runtime: disabled
-# - Explicit env var GLOSSARY_ENABLE_LIVE_UPDATE overrides both
-.default_live_update_enabled <- function() {
-  raw <- trimws(Sys.getenv("GLOSSARY_ENABLE_LIVE_UPDATE", ""))
-  if (nzchar(raw)) {
-    val <- tolower(raw)
-    if (val %in% c("1", "true", "t", "yes", "y", "on")) return(TRUE)
-    if (val %in% c("0", "false", "f", "no", "n", "off")) return(FALSE)
-  }
-
-  !.is_shinyapps_runtime()
-}
-
-# Detect shinyapps.io runtime using standard env markers.
-.is_shinyapps_runtime <- function() {
-  identical(tolower(Sys.getenv("R_CONFIG_ACTIVE", "")), "shinyapps") ||
-    (nzchar(Sys.getenv("SHINY_PORT", "")) && nzchar(Sys.getenv("SHINY_HOST", "")))
+# Version string shown in the app header.
+.app_version_string <- function() {
+  .package_version_safe()
 }

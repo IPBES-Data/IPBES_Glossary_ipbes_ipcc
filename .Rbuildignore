@@ -10,3 +10,7 @@
 ^\.\.Rcheck$
 ^.*[.]Rcheck$
 ^glossary[.]ipbes[.]ipcc_.*[.]tar[.]gz$
+^\.rscignore$
+^compare$
+^glossary$
+^manifest\.json$

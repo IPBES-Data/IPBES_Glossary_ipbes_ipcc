@@ -10,10 +10,13 @@ summarise_ipcc(ipcc_df)
 \item{ipcc_df}{Output of \code{\link[=load_ipcc]{load_ipcc()}}.}
 }
 \value{
-A \code{\link[dplyr:reexports]{dplyr::tibble()}} with columns \code{term}, \code{n_reports},
-\code{summary_definition}, \code{ipcc_data} (list-column of report x definition
-tibbles).
+A \code{\link[tibble:tibble]{tibble::tibble()}} with columns \code{term}, \code{n_reports},
+\code{summary_definition}, \code{ipcc_data} (list-column of
+report x definition x xref tibbles).
 }
 \description{
-Summarise IPCC glossary to one row per term
+Definitions are kept exactly as the report words them. A report's related-term
+pointers (\code{See}, \verb{See Also}, \code{Sub-terms}) are carried in a separate \code{xref}
+column so they can be displayed apart from the definition; a report entry may
+have a definition, pointers, both, or neither.
 }

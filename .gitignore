@@ -19,3 +19,7 @@ glossary.ipbes.ipcc_*.tar.gz
 ._*
 .Spotlight-V100
 .Trashes
+
+# local deployment scaffolding (renv libraries)
+compare/
+glossary/

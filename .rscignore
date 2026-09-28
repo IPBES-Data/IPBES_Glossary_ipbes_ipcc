@@ -1,0 +1,10 @@
+.claude
+.github
+.cache_startup_bench
+..Rcheck
+compare/
+glossary/
+data-raw
+tests
+man
+rsconnect
